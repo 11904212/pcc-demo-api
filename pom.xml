@@ -12,10 +12,21 @@
 	<artifactId>pcc-demo-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>PlanetaryComputer Client Demo API</name>
-	<description>Demo project for PlanetaryComputer Client </description>
+	<description>Demo project for PlanetaryComputer Client</description>
+
 	<properties>
 		<java.version>17</java.version>
+
+		<stac-client.version>0.3-SNAPSHOT</stac-client.version>
+		<planetarycomputer-client.version>0.3-SNAPSHOT</planetarycomputer-client.version>
+
+		<geotools.version>26.4</geotools.version>
+		<imageio.ext.version>1.3.12</imageio.ext.version>
+		<jackson.version>2.13.3</jackson.version>
+		<mil.nga.sf.version>2.0.6</mil.nga.sf.version>
+		<mil.nga.sf.sf-geojson.version>3.0.2</mil.nga.sf.sf-geojson.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -36,7 +47,73 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- own modules -->
+		<dependency>
+			<groupId>at.ac.tuwien.ba</groupId>
+			<artifactId>java-stac-client</artifactId>
+			<version>${stac-client.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>at.ac.tuwien.ba</groupId>
+			<artifactId>planetarycomputer-client</artifactId>
+			<version>${planetarycomputer-client.version}</version>
+		</dependency>
+
+		<!-- Geotools https://www.geotools.org/ -->
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-geotiff</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-epsg-hsql</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>it.geosolutions.imageio-ext</groupId>
+			<artifactId>imageio-ext-cog-rangereader-http</artifactId>
+			<version>${imageio.ext.version}</version>
+		</dependency>
+
+		<!-- National Geospatial-Intelligence Agency https://github.com/ngageoint -->
+		<dependency>
+			<groupId>mil.nga</groupId>
+			<artifactId>sf</artifactId>
+			<version>${mil.nga.sf.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>mil.nga.sf</groupId>
+			<artifactId>sf-geojson</artifactId>
+			<version>${mil.nga.sf.sf-geojson.version}</version>
+		</dependency>
+
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<!-- geotools -->
+			<id>geosolutions</id>
+			<name>GeoSolutions Repository</name>
+			<url>https://maven.geo-solutions.it/</url>
+			<snapshots><enabled>false</enabled></snapshots>
+			<releases><enabled>true</enabled></releases>
+		</repository>
+
+		<repository>
+			<!-- imageio-ext -->
+			<id>osgeo</id>
+			<name>OSGeo Release Repository</name>
+			<url>https://repo.osgeo.org/repository/release/</url>
+			<snapshots><enabled>false</enabled></snapshots>
+			<releases><enabled>true</enabled></releases>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
