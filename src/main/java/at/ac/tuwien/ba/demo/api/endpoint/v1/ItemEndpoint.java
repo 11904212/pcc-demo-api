@@ -3,9 +3,13 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemInfoDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.ItemMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
+import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
+import at.ac.tuwien.ba.demo.api.service.CloudyService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
+import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
+import mil.nga.sf.Geometry;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
 import mil.nga.sf.geojson.GeometryCollection;
@@ -45,13 +49,20 @@ public class ItemEndpoint {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final PlanetaryComputerService pccService;
+    private final CloudyService cloudyService;
+    private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final ItemMapper itemMapper;
 
     @Autowired
     public ItemEndpoint(
             PlanetaryComputerService pccService,
-            ItemMapper itemMapper) {
+            CloudyService cloudyService,
+            GeoJsonToJtsConverter geoJsonToJtsConverter,
+            ItemMapper itemMapper
+    ) {
         this.pccService = pccService;
+        this.cloudyService = cloudyService;
+        this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.itemMapper = itemMapper;
     }
 
@@ -89,15 +100,8 @@ public class ItemEndpoint {
                 collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
         );
 
-        GeometryCollection collection;
-        try {
-            collection = wktToGeoJson(aresOfInterest);
-        } catch (IOException e) {
-            LOGGER.error("failed to convert wkt:{}", aresOfInterest);
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
-            throw new ValidationException("given wkt was invalid, please check the formatting");
-        }
+        GeometryCollection collection = wktToGeometryCollection(aresOfInterest);
+
         return this.searchItems(
                 collections,
                 dateTimeFrom,
@@ -143,9 +147,7 @@ public class ItemEndpoint {
                 collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
         );
 
-        GeometryCollection collection = new GeometryCollection(
-                List.of(FeatureConverter.toGeometry(aresOfInterest))
-        );
+        var collection = geoJsonToGeometryCollection(aresOfInterest);
         return this.searchItems(
                 collections,
                 dateTimeFrom,
@@ -169,8 +171,13 @@ public class ItemEndpoint {
     public Boolean isCloudy(
             @PathVariable @NotBlank String itemId,
             @RequestParam @NotBlank String aresOfInterest
-    ){
-        return Boolean.FALSE;
+    ) throws ValidationException, ServiceException {
+        var collection = this.wktToGeometryCollection(aresOfInterest);
+
+        return this.isCloudy(
+                itemId,
+                collection
+        );
     }
 
     /**
@@ -186,15 +193,51 @@ public class ItemEndpoint {
     public Boolean isCloudy(
             @PathVariable @NotBlank String itemId,
             @RequestBody @Null GeoJsonObject aresOfInterest
-    ){
-        return Boolean.FALSE;
+    ) throws ValidationException, ServiceException {
+        var collection = geoJsonToGeometryCollection(aresOfInterest);
+        return isCloudy(itemId, collection);
     }
 
-    private GeometryCollection wktToGeoJson(String wkt) throws IOException {
-        var geom = GeometryReader.readGeometry(wkt);
+    private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
+        return new GeometryCollection(
+                List.of(FeatureConverter.toGeometry(geoJson))
+        );
+    }
+
+    private GeometryCollection wktToGeometryCollection(String wkt) throws ValidationException {
+        Geometry geom;
+        try {
+            geom = GeometryReader.readGeometry(wkt);
+        } catch (IOException e) {
+            LOGGER.error("failed to convert wkt:{}", wkt);
+            LOGGER.error(e.getMessage());
+            e.printStackTrace();
+            throw new ValidationException("given wkt was invalid, please check the formatting");
+        }
         return new GeometryCollection(
                 List.of(FeatureConverter.toGeometry(geom))
         );
+    }
+
+    private Boolean isCloudy(String itemId, GeometryCollection aresOfInterest)
+            throws ValidationException, ServiceException {
+        var optItem = this.pccService.getItemById(itemId);
+        if (optItem.isEmpty()) {
+            LOGGER.debug("could not find item:{}", itemId);
+            throw new ValidationException("could not find item with id:" + itemId);
+        }
+        var item = optItem.get();
+
+        org.locationtech.jts.geom.Geometry aoiGeom;
+        try {
+
+            aoiGeom = this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("could not convert GeoJson to JTS. geoJson:{}", aresOfInterest);
+            throw new ValidationException("error while converting aresOfInterest. plead check the formatting again.");
+        }
+
+        return this.cloudyService.isItemCloudy(item, aoiGeom);
     }
 
     private List<ItemInfoDto> searchItems(
