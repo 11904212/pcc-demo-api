@@ -85,6 +85,10 @@ public class ItemEndpoint {
             @RequestParam(required = false, defaultValue = "" + MAX_RESULTS) int limit
             ) throws ValidationException, NotFoundException {
 
+        LOGGER.info("GET " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
+                collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
+        );
+
         GeometryCollection collection;
         try {
             collection = wktToGeoJson(aresOfInterest);
@@ -94,7 +98,7 @@ public class ItemEndpoint {
             e.printStackTrace();
             throw new ValidationException("given wkt was invalid, please check the formatting");
         }
-        return this.getItems(
+        return this.searchItems(
                 collections,
                 dateTimeFrom,
                 dateTimeTo,
@@ -130,49 +134,25 @@ public class ItemEndpoint {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             @PastOrPresent ZonedDateTime dateTimeTo,
 
-            @RequestBody @NotNull GeometryCollection aresOfInterest,
+            @RequestBody @NotNull GeoJsonObject aresOfInterest,
 
             @RequestParam(defaultValue = "" + MAX_RESULTS) int limit
             ) throws ValidationException, NotFoundException {
 
-        LOGGER.info("GET|POST " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
+        LOGGER.info("POST " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
                 collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
         );
 
-        if (dateTimeTo == null) {
-            dateTimeTo = ZonedDateTime.now(ZoneId.of("UTC"));
-        }
-
-        if (dateTimeFrom.isAfter(dateTimeTo)) {
-            LOGGER.debug("invalid request dateFrom({}) is before dateTo({})", dateTimeFrom, dateTimeTo);
-            throw new ValidationException("the given dateFrom must be before the given dateTo");
-        }
-
-        var query = new QueryParameter();
-        query.setCollections(collections);
-
-        if (dateTimeFrom.isEqual(dateTimeTo)) {
-            query.setDatetime(dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        } else {
-            query.setDatetime(String.format("%s/%s",
-                    dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                    dateTimeTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-            );
-        }
-
-        query.setIntersects(aresOfInterest);
-        query.setLimit(limit);
-
-        var resultList = this.pccService.getItemsByQuery(query);
-        if (resultList.isEmpty()) {
-            LOGGER.debug("could not find items for query: {}", query);
-            throw new NotFoundException("could not find items");
-        }
-
-        var result = resultList.stream().map(itemMapper::itemToDto).toList();
-
-        LOGGER.debug("returned {} items", result.size());
-        return result;
+        GeometryCollection collection = new GeometryCollection(
+                List.of(FeatureConverter.toGeometry(aresOfInterest))
+        );
+        return this.searchItems(
+                collections,
+                dateTimeFrom,
+                dateTimeTo,
+                collection,
+                limit
+        );
     }
 
     /**
@@ -215,6 +195,50 @@ public class ItemEndpoint {
         return new GeometryCollection(
                 List.of(FeatureConverter.toGeometry(geom))
         );
+    }
+
+    private List<ItemInfoDto> searchItems(
+            List<String> collections,
+            ZonedDateTime dateTimeFrom,
+            ZonedDateTime dateTimeTo,
+            GeometryCollection aresOfInterest,
+            int limit
+    ) throws ValidationException, NotFoundException {
+        if (dateTimeTo == null) {
+            dateTimeTo = ZonedDateTime.now(ZoneId.of("UTC"));
+        }
+
+        if (dateTimeFrom.isAfter(dateTimeTo)) {
+            LOGGER.debug("invalid request dateFrom({}) is before dateTo({})", dateTimeFrom, dateTimeTo);
+            throw new ValidationException("the given dateFrom must be before the given dateTo");
+        }
+
+        var query = new QueryParameter();
+        query.setCollections(collections);
+
+        if (dateTimeFrom.isEqual(dateTimeTo)) {
+            query.setDatetime(dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        } else {
+            query.setDatetime(String.format("%s/%s",
+                    dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    dateTimeTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+            );
+        }
+
+        query.setIntersects(aresOfInterest);
+        query.setLimit(limit);
+
+        var resultList = this.pccService.getItemsByQuery(query);
+        if (resultList.isEmpty()) {
+            LOGGER.debug("could not find items for query: {}", query);
+            throw new NotFoundException("could not find items");
+        }
+
+        var result = resultList.stream().map(itemMapper::itemToDto).toList();
+
+        LOGGER.debug("returned {} items", result.size());
+
+        return result;
     }
 
 }
