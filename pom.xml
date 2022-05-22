@@ -25,6 +25,7 @@
 		<jackson.version>2.13.3</jackson.version>
 		<mil.nga.sf.version>2.0.6</mil.nga.sf.version>
 		<mil.nga.sf.sf-geojson.version>3.0.2</mil.nga.sf.sf-geojson.version>
+		<mil.nga.sf.sf-wkt.version>1.0.2</mil.nga.sf.sf-wkt.version>
 	</properties>
 
 	<dependencies>
@@ -91,6 +92,12 @@
 			<groupId>mil.nga.sf</groupId>
 			<artifactId>sf-geojson</artifactId>
 			<version>${mil.nga.sf.sf-geojson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>mil.nga.sf</groupId>
+			<artifactId>sf-wkt</artifactId>
+			<version>${mil.nga.sf.sf-wkt.version}</version>
 		</dependency>
 
 	</dependencies>

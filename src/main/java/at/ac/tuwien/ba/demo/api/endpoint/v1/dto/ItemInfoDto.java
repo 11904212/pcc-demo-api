@@ -1,18 +1,18 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1.dto;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.time.ZonedDateTime;
 
 @NoArgsConstructor
+@Getter
 @Setter
 public class ItemInfoDto {
 
     private String id;
-    private LocalDate date;
+    private ZonedDateTime date;
     private String collection;
-    private List<String> bands;
 
 }
