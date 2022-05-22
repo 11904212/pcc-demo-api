@@ -2,6 +2,7 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemInfoDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.ItemMapper;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
@@ -9,11 +10,9 @@ import at.ac.tuwien.ba.demo.api.service.CloudyService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
-import mil.nga.sf.Geometry;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
 import mil.nga.sf.geojson.GeometryCollection;
-import mil.nga.sf.wkt.GeometryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +32,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 import javax.validation.constraints.PastOrPresent;
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -52,18 +50,21 @@ public class ItemEndpoint {
     private final CloudyService cloudyService;
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final ItemMapper itemMapper;
+    private final WktMapper wktMapper;
 
     @Autowired
     public ItemEndpoint(
             PlanetaryComputerService pccService,
             CloudyService cloudyService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
-            ItemMapper itemMapper
+            ItemMapper itemMapper,
+            WktMapper wktMapper
     ) {
         this.pccService = pccService;
         this.cloudyService = cloudyService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.itemMapper = itemMapper;
+        this.wktMapper = wktMapper;
     }
 
     /**
@@ -100,7 +101,7 @@ public class ItemEndpoint {
                 collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
         );
 
-        GeometryCollection collection = wktToGeometryCollection(aresOfInterest);
+        GeometryCollection collection = wktMapper.wktToGeometryCollection(aresOfInterest);
 
         return this.searchItems(
                 collections,
@@ -172,7 +173,7 @@ public class ItemEndpoint {
             @PathVariable @NotBlank String itemId,
             @RequestParam @NotBlank String aresOfInterest
     ) throws ValidationException, ServiceException {
-        var collection = this.wktToGeometryCollection(aresOfInterest);
+        var collection = wktMapper.wktToGeometryCollection(aresOfInterest);
 
         return this.isCloudy(
                 itemId,
@@ -201,21 +202,6 @@ public class ItemEndpoint {
     private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
         return new GeometryCollection(
                 List.of(FeatureConverter.toGeometry(geoJson))
-        );
-    }
-
-    private GeometryCollection wktToGeometryCollection(String wkt) throws ValidationException {
-        Geometry geom;
-        try {
-            geom = GeometryReader.readGeometry(wkt);
-        } catch (IOException e) {
-            LOGGER.error("failed to convert wkt:{}", wkt);
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
-            throw new ValidationException("given wkt was invalid, please check the formatting");
-        }
-        return new GeometryCollection(
-                List.of(FeatureConverter.toGeometry(geom))
         );
     }
 

@@ -3,7 +3,6 @@ package at.ac.tuwien.ba.demo.api.util;
 import lombok.Getter;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Getter
