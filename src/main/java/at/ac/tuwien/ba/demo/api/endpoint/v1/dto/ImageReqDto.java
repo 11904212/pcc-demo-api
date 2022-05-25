@@ -9,9 +9,9 @@ import mil.nga.sf.geojson.GeoJsonObject;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString
 public class ImageReqDto {
 

@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,11 +28,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 import javax.validation.constraints.PastOrPresent;
+import javax.validation.constraints.Positive;
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -40,6 +44,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
+@Validated
 public class ItemEndpoint {
     public static final String BASE_URL = "/v1/items";
     public static final int MAX_RESULTS = 100;
@@ -82,18 +87,22 @@ public class ItemEndpoint {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
-            @RequestParam @NotEmpty List<String> collections,
+            @NotEmpty
+            @RequestParam List<String> collections,
 
-            @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent ZonedDateTime dateTimeFrom,
+            @PastOrPresent
+            @RequestParam ZonedDateTime dateTimeFrom,
 
-            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent ZonedDateTime dateTimeTo,
+            @PastOrPresent
+            @RequestParam(required = false) ZonedDateTime dateTimeTo,
 
-            @RequestParam @NotBlank String aresOfInterest,
+            @NotBlank
+            @RequestParam String aresOfInterest,
 
+            @Positive
+            @Max(value = MAX_RESULTS)
             @RequestParam(required = false, defaultValue = "" + MAX_RESULTS) int limit
             ) throws ValidationException, NotFoundException {
 
@@ -129,19 +138,23 @@ public class ItemEndpoint {
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
-            @RequestParam @NotEmpty List<String> collections,
+            @NotEmpty
+            @RequestParam List<String> collections,
 
-            @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent ZonedDateTime dateTimeFrom,
+            @PastOrPresent
+            @RequestParam ZonedDateTime dateTimeFrom,
 
-            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent ZonedDateTime dateTimeTo,
+            @PastOrPresent
+            @RequestParam(required = false) ZonedDateTime dateTimeTo,
 
-            @RequestBody @NotNull GeoJsonObject aresOfInterest,
+            @Positive @Max(value = MAX_RESULTS)
+            @RequestParam(defaultValue = "" + MAX_RESULTS)int limit,
 
-            @RequestParam(defaultValue = "" + MAX_RESULTS) int limit
+            @Valid
+            @NotNull
+            @RequestBody GeoJsonObject aresOfInterest
             ) throws ValidationException, NotFoundException {
 
         LOGGER.info("POST " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
@@ -170,8 +183,11 @@ public class ItemEndpoint {
     @GetMapping("{itemId}/cloudy")
     @ResponseStatus(HttpStatus.OK)
     public Boolean isCloudy(
-            @PathVariable @NotBlank String itemId,
-            @RequestParam @NotBlank String aresOfInterest
+            @NotBlank
+            @PathVariable String itemId,
+
+            @NotBlank
+            @RequestParam String aresOfInterest
     ) throws ValidationException, ServiceException {
         var collection = wktMapper.wktToGeometryCollection(aresOfInterest);
 
@@ -192,8 +208,11 @@ public class ItemEndpoint {
     @PostMapping("{itemId}/cloudy")
     @ResponseStatus(HttpStatus.OK)
     public Boolean isCloudy(
-            @PathVariable @NotBlank String itemId,
-            @RequestBody @Null GeoJsonObject aresOfInterest
+            @NotBlank
+            @PathVariable String itemId,
+
+            @Null
+            @RequestBody GeoJsonObject aresOfInterest
     ) throws ValidationException, ServiceException {
         var collection = geoJsonToGeometryCollection(aresOfInterest);
         return isCloudy(itemId, collection);
@@ -239,7 +258,7 @@ public class ItemEndpoint {
 
         if (dateTimeFrom.isAfter(dateTimeTo)) {
             LOGGER.debug("invalid request dateFrom({}) is before dateTo({})", dateTimeFrom, dateTimeTo);
-            throw new ValidationException("the given dateFrom must be before the given dateTo");
+            throw new ValidationException("the given dateTimeFrom must be before the given dateTimeTo");
         }
 
         var query = new QueryParameter();
