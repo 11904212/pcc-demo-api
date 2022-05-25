@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +41,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
+@CrossOrigin
 public class ItemEndpoint {
     public static final String BASE_URL = "/v1/items";
     public static final int MAX_RESULTS = 100;

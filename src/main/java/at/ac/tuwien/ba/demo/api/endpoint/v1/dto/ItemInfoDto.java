@@ -5,8 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.ZonedDateTime;
-
 @NoArgsConstructor
 @Getter
 @Setter
@@ -14,7 +12,7 @@ import java.time.ZonedDateTime;
 public class ItemInfoDto {
 
     private String id;
-    private ZonedDateTime date;
-    private String collection;
+    private String dateTime;
+    private String collectionId;
 
 }
