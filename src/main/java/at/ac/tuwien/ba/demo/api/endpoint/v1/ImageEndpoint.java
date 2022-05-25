@@ -1,6 +1,6 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.CoverageReqDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,7 @@ import java.net.URL;
 @RestController
 @RequestMapping(ImageEndpoint.BASE_URL)
 @Validated
+@CrossOrigin
 public class ImageEndpoint {
     public static final String BASE_URL = "/v1/images";
 
@@ -74,7 +76,7 @@ public class ImageEndpoint {
                 itemId, areaOfInterest, imageType
         );
 
-        CoverageReqDto dto = new CoverageReqDto();
+        ImageReqDto dto = new ImageReqDto();
         dto.setItemId(itemId);
         var geom = wktMapper.wktToGeometryCollection(areaOfInterest);
         dto.setAreaOfInterest(geom);
@@ -88,7 +90,7 @@ public class ImageEndpoint {
     )
     public @ResponseBody byte[] getGeoTiff(
             @Valid
-            @RequestBody CoverageReqDto dto
+            @RequestBody ImageReqDto dto
     ) throws NotFoundException, ServiceException {
         LOGGER.info("POST " + BASE_URL + " dto={}", dto);
 

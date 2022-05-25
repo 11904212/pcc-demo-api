@@ -13,7 +13,7 @@ import javax.validation.constraints.NotNull;
 @Setter
 @NoArgsConstructor
 @ToString
-public class CoverageReqDto {
+public class ImageReqDto {
 
     @NotNull
     private GeoJsonObject areaOfInterest;
