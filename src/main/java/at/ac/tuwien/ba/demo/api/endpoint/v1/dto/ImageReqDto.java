@@ -21,7 +21,7 @@ public class ImageReqDto {
     @NotBlank
     private String itemId;
 
-    @NotBlank
-    private String imageType;
+    @NotNull
+    private ImageType imageType;
 
 }
