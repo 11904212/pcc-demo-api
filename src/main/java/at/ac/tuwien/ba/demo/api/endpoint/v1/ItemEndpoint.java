@@ -1,6 +1,7 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemInfoDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.ItemMapper;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
@@ -41,6 +42,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
@@ -48,6 +50,7 @@ import java.util.List;
 public class ItemEndpoint {
     public static final String BASE_URL = "/v1/items";
     public static final int MAX_RESULTS = 100;
+    public static final int DEFAULT_RESULTS = 100;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -103,7 +106,7 @@ public class ItemEndpoint {
 
             @Positive
             @Max(value = MAX_RESULTS)
-            @RequestParam(required = false, defaultValue = "" + MAX_RESULTS) int limit
+            @RequestParam(required = false) Integer limit
             ) throws ValidationException, NotFoundException {
 
         LOGGER.info("GET " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
@@ -115,9 +118,9 @@ public class ItemEndpoint {
         return this.searchItems(
                 collections,
                 dateTimeFrom,
-                dateTimeTo,
+                Optional.ofNullable(dateTimeTo),
                 collection,
-                limit
+                Optional.ofNullable(limit)
         );
     }
 
@@ -127,47 +130,26 @@ public class ItemEndpoint {
      * this endpoint offers an alternative to the get request.
      * the required parameters must all be passed in the request-body.
      *
-     * @param collections a list of ids which should be searched.
-     * @param dateTimeFrom items should not be older than this date.
-     * @param dateTimeTo items should not be newer than this date (default is current datetime).
-     * @param aresOfInterest items should intersect with this area of interest.
-     *                       formatted as GeoJson using the WGS84 coordinate system (longitude, latitude)
-     * @param limit an upper limit on the number of results returned (default 100)
+     * @param itemReqDto the request body containing all param as the get methode
      * @return the list of matching {@link ItemInfoDto}
      */
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
-            @NotEmpty
-            @RequestParam List<String> collections,
-
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent
-            @RequestParam ZonedDateTime dateTimeFrom,
-
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @PastOrPresent
-            @RequestParam(required = false) ZonedDateTime dateTimeTo,
-
-            @Positive @Max(value = MAX_RESULTS)
-            @RequestParam(defaultValue = "" + MAX_RESULTS)int limit,
-
             @Valid
             @NotNull
-            @RequestBody GeoJsonObject aresOfInterest
+            @RequestBody ItemReqDto itemReqDto
             ) throws ValidationException, NotFoundException {
 
-        LOGGER.info("POST " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
-                collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
-        );
+        LOGGER.info("POST " + BASE_URL + " body={}", itemReqDto);
 
-        var collection = geoJsonToGeometryCollection(aresOfInterest);
+        var collection = geoJsonToGeometryCollection(itemReqDto.getAresOfInterest());
         return this.searchItems(
-                collections,
-                dateTimeFrom,
-                dateTimeTo,
+                itemReqDto.getCollections(),
+                itemReqDto.getDateTimeFrom(),
+                Optional.ofNullable(itemReqDto.getDateTimeTo()),
                 collection,
-                limit
+                Optional.ofNullable(itemReqDto.getLimit())
         );
     }
 
@@ -248,15 +230,15 @@ public class ItemEndpoint {
     private List<ItemInfoDto> searchItems(
             List<String> collections,
             ZonedDateTime dateTimeFrom,
-            ZonedDateTime dateTimeTo,
+            Optional<ZonedDateTime> dateTimeTo,
             GeometryCollection aresOfInterest,
-            int limit
+            Optional<Integer> limit
     ) throws ValidationException, NotFoundException {
-        if (dateTimeTo == null) {
-            dateTimeTo = ZonedDateTime.now(ZoneId.of("UTC"));
-        }
 
-        if (dateTimeFrom.isAfter(dateTimeTo)) {
+        var dateTimeToDefault = dateTimeTo.orElse(ZonedDateTime.now(ZoneId.of("UTC")));
+
+
+        if (dateTimeFrom.isAfter(dateTimeToDefault)) {
             LOGGER.debug("invalid request dateFrom({}) is before dateTo({})", dateTimeFrom, dateTimeTo);
             throw new ValidationException("the given dateTimeFrom must be before the given dateTimeTo");
         }
@@ -264,17 +246,18 @@ public class ItemEndpoint {
         var query = new QueryParameter();
         query.setCollections(collections);
 
-        if (dateTimeFrom.isEqual(dateTimeTo)) {
+        if (dateTimeFrom.isEqual(dateTimeToDefault)) {
             query.setDatetime(dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         } else {
             query.setDatetime(String.format("%s/%s",
                     dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                    dateTimeTo.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                    dateTimeToDefault.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
             );
         }
 
         query.setIntersects(aresOfInterest);
-        query.setLimit(limit);
+        query.setLimit(limit.orElse(DEFAULT_RESULTS));
+
 
         var resultList = this.pccService.getItemsByQuery(query);
         if (resultList.isEmpty()) {
