@@ -41,6 +41,9 @@ public class ItemReqDto {
     @Positive @Max(value = ItemEndpoint.MAX_RESULTS)
     private Integer limit;
 
+    @Nullable
+    private Boolean filterCloudy;
+
     @NotNull
     private GeoJsonObject aresOfInterest;
 }

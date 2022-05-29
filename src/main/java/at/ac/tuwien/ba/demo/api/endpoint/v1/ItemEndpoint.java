@@ -10,6 +10,7 @@ import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.CloudyService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
+import at.ac.tuwien.ba.stac.client.core.Item;
 import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
@@ -21,7 +22,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,7 +34,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Positive;
 import java.lang.invoke.MethodHandles;
@@ -43,6 +42,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
@@ -50,7 +50,8 @@ import java.util.Optional;
 public class ItemEndpoint {
     public static final String BASE_URL = "/v1/items";
     public static final int MAX_RESULTS = 100;
-    public static final int DEFAULT_RESULTS = 100;
+    public static final int DEFAULT_RESULTS = 10;
+    public static final boolean DEFAULT_FILTER_CLOUDY = false;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -106,8 +107,10 @@ public class ItemEndpoint {
 
             @Positive
             @Max(value = MAX_RESULTS)
-            @RequestParam(required = false) Integer limit
-            ) throws ValidationException, NotFoundException {
+            @RequestParam(required = false) Integer limit,
+
+            @RequestParam(required = false) Boolean filterCloudy
+            ) throws ValidationException, NotFoundException, ServiceException {
 
         LOGGER.info("GET " + BASE_URL + " collections={} dateFrom={} dateTo={} aresOfInterest={} limit={}",
                 collections, dateTimeFrom, dateTimeTo, aresOfInterest, limit
@@ -120,7 +123,8 @@ public class ItemEndpoint {
                 dateTimeFrom,
                 Optional.ofNullable(dateTimeTo),
                 collection,
-                Optional.ofNullable(limit)
+                Optional.ofNullable(limit),
+                Optional.ofNullable(filterCloudy)
         );
     }
 
@@ -139,7 +143,7 @@ public class ItemEndpoint {
             @Valid
             @NotNull
             @RequestBody ItemReqDto itemReqDto
-            ) throws ValidationException, NotFoundException {
+            ) throws ValidationException, NotFoundException, ServiceException {
 
         LOGGER.info("POST " + BASE_URL + " body={}", itemReqDto);
 
@@ -149,82 +153,9 @@ public class ItemEndpoint {
                 itemReqDto.getDateTimeFrom(),
                 Optional.ofNullable(itemReqDto.getDateTimeTo()),
                 collection,
-                Optional.ofNullable(itemReqDto.getLimit())
+                Optional.ofNullable(itemReqDto.getLimit()),
+                Optional.ofNullable(itemReqDto.getFilterCloudy())
         );
-    }
-
-    /**
-     * returns whether the given range of an item is cloudy.
-     *
-     * @param itemId the id of the item
-     * @param aresOfInterest the area of the item to check.
-     *                       the string must be formatted as well known text and
-     *                       the coordinates must be given in WGS84 format (longitude, latitude).
-     * @return whether the given range of an item is cloudy
-     */
-    @GetMapping("{itemId}/cloudy")
-    @ResponseStatus(HttpStatus.OK)
-    public Boolean isCloudy(
-            @NotBlank
-            @PathVariable String itemId,
-
-            @NotBlank
-            @RequestParam String aresOfInterest
-    ) throws ValidationException, ServiceException {
-        var collection = wktMapper.wktToGeometryCollection(aresOfInterest);
-
-        return this.isCloudy(
-                itemId,
-                collection
-        );
-    }
-
-    /**
-     * returns whether the given range of an item is cloudy.
-     *
-     * @param itemId the id of the item
-     * @param aresOfInterest the area of the item to check.
-     *                       formatted as GeoJson using the WGS84 coordinate system (longitude, latitude).
-     * @return whether the given range of an item is cloudy
-     */
-    @PostMapping("{itemId}/cloudy")
-    @ResponseStatus(HttpStatus.OK)
-    public Boolean isCloudy(
-            @NotBlank
-            @PathVariable String itemId,
-
-            @Null
-            @RequestBody GeoJsonObject aresOfInterest
-    ) throws ValidationException, ServiceException {
-        var collection = geoJsonToGeometryCollection(aresOfInterest);
-        return isCloudy(itemId, collection);
-    }
-
-    private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
-        return new GeometryCollection(
-                List.of(FeatureConverter.toGeometry(geoJson))
-        );
-    }
-
-    private Boolean isCloudy(String itemId, GeometryCollection aresOfInterest)
-            throws ValidationException, ServiceException {
-        var optItem = this.pccService.getItemById(itemId);
-        if (optItem.isEmpty()) {
-            LOGGER.debug("could not find item:{}", itemId);
-            throw new ValidationException("could not find item with id:" + itemId);
-        }
-        var item = optItem.get();
-
-        org.locationtech.jts.geom.Geometry aoiGeom;
-        try {
-
-            aoiGeom = this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
-        } catch (IllegalArgumentException e) {
-            LOGGER.error("could not convert GeoJson to JTS. geoJson:{}", aresOfInterest);
-            throw new ValidationException("error while converting aresOfInterest. plead check the formatting again.");
-        }
-
-        return this.cloudyService.isItemCloudy(item, aoiGeom);
     }
 
     private List<ItemInfoDto> searchItems(
@@ -232,8 +163,9 @@ public class ItemEndpoint {
             ZonedDateTime dateTimeFrom,
             Optional<ZonedDateTime> dateTimeTo,
             GeometryCollection aresOfInterest,
-            Optional<Integer> limit
-    ) throws ValidationException, NotFoundException {
+            Optional<Integer> limit,
+            Optional<Boolean> filterCloudy
+    ) throws ValidationException, NotFoundException, ServiceException {
 
         var dateTimeToDefault = dateTimeTo.orElse(ZonedDateTime.now(ZoneId.of("UTC")));
 
@@ -265,11 +197,52 @@ public class ItemEndpoint {
             throw new NotFoundException("could not find items");
         }
 
+        if ((filterCloudy.isPresent() && filterCloudy.get())
+                || (filterCloudy.isEmpty() && DEFAULT_FILTER_CLOUDY)
+        ) {
+            resultList = filterCloudyItems(resultList, aresOfInterest);
+        }
+
         var result = resultList.stream().map(itemMapper::itemToDto).toList();
 
         LOGGER.debug("returned {} items", result.size());
 
         return result;
+    }
+    
+    private List<Item> filterCloudyItems(List<Item> items, GeometryCollection aresOfInterest) throws ValidationException, ServiceException {
+        org.locationtech.jts.geom.Geometry aoiGeom;
+        try {
+
+            aoiGeom = this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("could not convert GeoJson to JTS. geoJson:{}", aresOfInterest);
+            throw new ValidationException("error while converting aresOfInterest. plead check the formatting again.");
+        }
+
+        AtomicBoolean error = new AtomicBoolean(false);
+
+        var cloudFreeItems=  items.parallelStream()
+                .filter(item -> {
+                    try {
+                        return !this.cloudyService.isItemCloudy(item, aoiGeom);
+                    } catch (ServiceException e) {
+                        error.set(true);
+                        return false;
+                    }
+                }).toList();
+
+        if (error.get()) {
+            throw new ServiceException("error while checking cloudiness of items");
+        }
+
+        return cloudFreeItems;
+    }
+
+    private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
+        return new GeometryCollection(
+                List.of(FeatureConverter.toGeometry(geoJson))
+        );
     }
 
 }
