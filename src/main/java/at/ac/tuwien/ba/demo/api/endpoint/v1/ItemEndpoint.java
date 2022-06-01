@@ -1,7 +1,7 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemInfoDto;
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ItemReqDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.ItemInfoDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.ItemReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.ItemMapper;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;

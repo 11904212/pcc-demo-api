@@ -1,6 +1,6 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageReqDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.ImageReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageType;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.lang.invoke.MethodHandles;
 
 @RestController
@@ -62,7 +63,7 @@ public class ImageEndpoint {
             @NotBlank
             @RequestParam String areaOfInterest,
 
-            @NotBlank
+            @NotNull
             @RequestParam ImageType imageType
     ) throws NotFoundException, ServiceException, ValidationException {
         LOGGER.info("GET " + BASE_URL + " itemId={} areaOfInterest={} imageType={}",

@@ -1,4 +1,4 @@
-package at.ac.tuwien.ba.demo.api.endpoint.v1.dto;
+package at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in;
 
 
 import lombok.Getter;

@@ -1,5 +1,6 @@
-package at.ac.tuwien.ba.demo.api.endpoint.v1.dto;
+package at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in;
 
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,18 +11,18 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @NoArgsConstructor
-@Getter
 @Setter
+@Getter
 @ToString
 public class ImageReqDto {
-
-    @NotNull
-    private GeoJsonObject areaOfInterest;
 
     @NotBlank
     private String itemId;
 
     @NotNull
     private ImageType imageType;
+
+    @NotNull
+    private GeoJsonObject areaOfInterest;
 
 }

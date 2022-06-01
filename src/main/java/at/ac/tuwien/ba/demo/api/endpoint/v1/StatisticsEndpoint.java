@@ -1,7 +1,7 @@
 package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.NdviStatsDto;
-import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.NdviStatsReqDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.NdviStatsDto;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.NdviStatsReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
