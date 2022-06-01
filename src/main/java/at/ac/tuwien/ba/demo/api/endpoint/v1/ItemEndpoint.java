@@ -147,7 +147,7 @@ public class ItemEndpoint {
 
         LOGGER.info("POST " + BASE_URL + " body={}", itemReqDto);
 
-        var collection = geoJsonToGeometryCollection(itemReqDto.getAresOfInterest());
+        var collection = geoJsonToGeometryCollection(itemReqDto.getAreaOfInterest());
         return this.searchItems(
                 itemReqDto.getCollections(),
                 itemReqDto.getDateTimeFrom(),

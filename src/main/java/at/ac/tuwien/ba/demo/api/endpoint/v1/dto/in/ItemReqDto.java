@@ -44,7 +44,6 @@ public class ItemReqDto {
     @Nullable
     private Boolean filterCloudy;
 
-    // TODO: remove typo
     @NotNull
-    private GeoJsonObject aresOfInterest;
+    private GeoJsonObject areaOfInterest;
 }
