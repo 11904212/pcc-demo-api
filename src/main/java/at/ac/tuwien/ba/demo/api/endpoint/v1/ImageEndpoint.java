@@ -6,7 +6,7 @@ import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
-import at.ac.tuwien.ba.demo.api.service.GeoTiffService;
+import at.ac.tuwien.ba.demo.api.service.ImageService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import org.slf4j.Logger;
@@ -36,19 +36,19 @@ public class ImageEndpoint {
     private final PlanetaryComputerService planetaryComputerService;
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final WktMapper wktMapper;
-    private final GeoTiffService geoTiffService;
+    private final ImageService imageService;
 
     @Autowired
     public ImageEndpoint(
             PlanetaryComputerService planetaryComputerService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             WktMapper wktMapper,
-            GeoTiffService geoTiffService
+            ImageService imageService
     ) {
         this.planetaryComputerService = planetaryComputerService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.wktMapper = wktMapper;
-        this.geoTiffService = geoTiffService;
+        this.imageService = imageService;
     }
 
     @GetMapping(
@@ -100,8 +100,8 @@ public class ImageEndpoint {
         aoi.setSRID(4326);
 
         return switch (dto.getImageType()) {
-            case TCI -> geoTiffService.getTciGeoTiff(item, aoi);
-            case NDVI -> geoTiffService.getNdviGeoTiff(item, aoi);
+            case TCI -> imageService.getTciGeoTiff(item, aoi);
+            case NDVI -> imageService.getNdviGeoTiff(item, aoi);
         };
     }
 }

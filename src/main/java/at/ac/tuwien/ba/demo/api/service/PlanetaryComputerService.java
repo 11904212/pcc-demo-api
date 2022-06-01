@@ -1,9 +1,9 @@
 package at.ac.tuwien.ba.demo.api.service;
 
+import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.stac.client.core.Item;
 import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +30,10 @@ public interface PlanetaryComputerService {
      *
      * @param item the {@link Item}
      * @return the signed {@link Item}
-     * @throws IOException in case the item could not be signed.
+     * @throws ServiceException in case the item could not be signed.
      */
-    Item signItem(Item item) throws IOException;
+    Item signItem(Item item) throws ServiceException;
+
+
+    List<Item> getItemsById(List<String> itemIds);
 }

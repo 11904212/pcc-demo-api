@@ -3,7 +3,7 @@ package at.ac.tuwien.ba.demo.api.service.impl;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.CoverageService;
-import at.ac.tuwien.ba.demo.api.service.GeoTiffService;
+import at.ac.tuwien.ba.demo.api.service.ImageService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
 import at.ac.tuwien.ba.stac.client.core.Asset;
@@ -22,7 +22,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URL;
 
 @Service
-public class GeoTiffServiceImpl implements GeoTiffService {
+public class ImageServiceImpl implements ImageService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -30,7 +30,7 @@ public class GeoTiffServiceImpl implements GeoTiffService {
     private final PlanetaryComputerService planetaryComputerService;
 
     @Autowired
-    public GeoTiffServiceImpl(
+    public ImageServiceImpl(
             CoverageService coverageService,
             PlanetaryComputerService planetaryComputerService
     ) {
@@ -41,9 +41,25 @@ public class GeoTiffServiceImpl implements GeoTiffService {
     @Override
     public byte[] getTciGeoTiff(Item item, Geometry aoi) throws ServiceException, NotFoundException {
 
+        var transformedCoverage = getTciImage(item, aoi);
+
+        return coverageToBinary(transformedCoverage);
+    }
+
+    @Override
+    public byte[] getNdviGeoTiff(Item item, Geometry aoi) throws NotFoundException, ServiceException {
+
+        var transformedCoverage = getNdviImage(item, aoi);
+
+        return coverageToBinary(transformedCoverage);
+    }
+
+    @Override
+    public GridCoverage2D getTciImage(Item item, Geometry aoi) throws ServiceException, NotFoundException {
+
         var collectionInfo = getCollectionInfo(item);
 
-        var signedItem = signeItem(item);
+        var signedItem = planetaryComputerService.signItem(item);
 
         var optAsset = signedItem.getAsset(collectionInfo.getTciBand());
         if (optAsset.isEmpty()) {
@@ -57,17 +73,15 @@ public class GeoTiffServiceImpl implements GeoTiffService {
 
         var coverage = getGridCoverage2D(asset, aoi);
 
-        var transformedCoverage = transformGridCoverage2D(coverage, "EPSG:3857");
-
-        return coverageToBinary(transformedCoverage);
+        return transformGridCoverage2D(coverage, "EPSG:3857");
     }
 
     @Override
-    public byte[] getNdviGeoTiff(Item item, Geometry aoi) throws NotFoundException, ServiceException {
+    public GridCoverage2D getNdviImage(Item item, Geometry aoi) throws NotFoundException, ServiceException {
 
         var collectionInfo = getCollectionInfo(item);
 
-        var signedItem = signeItem(item);
+        var signedItem = planetaryComputerService.signItem(item);
 
         var optAssetRed = signedItem.getAsset(collectionInfo.getRedBand());
         var optAssetNir = signedItem.getAsset(collectionInfo.getNirBand());
@@ -89,21 +103,9 @@ public class GeoTiffServiceImpl implements GeoTiffService {
 
         var coverageNdvi = coverageService.calcCoverageNdvi(coverageNir, coverageRed);
 
-        var transformedCoverage = transformGridCoverage2D(coverageNdvi, "EPSG:3857");
-
-        return coverageToBinary(transformedCoverage);
+        return transformGridCoverage2D(coverageNdvi, "EPSG:3857");
     }
 
-    private Item signeItem(Item item) throws ServiceException {
-        Item signedItem;
-        try {
-            signedItem = this.planetaryComputerService.signItem(item);
-        } catch (IOException e) {
-            var msg = String.format("planetary computer could not sign %s", item);
-            throw new ServiceException(msg, e);
-        }
-        return signedItem;
-    }
 
     private void validateAssetType(Asset asset) throws ServiceException {
         var type = asset.getType();

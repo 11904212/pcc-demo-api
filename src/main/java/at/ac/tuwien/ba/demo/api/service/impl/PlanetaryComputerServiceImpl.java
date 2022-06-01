@@ -1,5 +1,6 @@
 package at.ac.tuwien.ba.demo.api.service.impl;
 
+import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.pcc.PlanetaryComputer;
 import at.ac.tuwien.ba.pcc.PlanetaryComputerImpl;
@@ -76,7 +77,22 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
     }
 
     @Override
-    public Item signItem(Item item) throws IOException {
-        return this.planetaryComputer.sign(item);
+    public Item signItem(Item item) throws ServiceException {
+        Item signedItem;
+        try {
+            signedItem = this.planetaryComputer.sign(item);
+        } catch (IOException e) {
+            var msg = String.format("planetary computer could not sign %s", item);
+            throw new ServiceException(msg, e);
+        }
+        return signedItem;
+    }
+
+    @Override
+    public List<Item> getItemsById(List<String> itemIds) {
+        var query = new QueryParameter();
+        query.setIds(itemIds);
+
+        return getItemsByQuery(query);
     }
 }

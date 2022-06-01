@@ -63,15 +63,7 @@ public class CloudyServiceImpl implements CloudyService {
             }
         }
 
-        Item signedItem;
-        try {
-            signedItem = pccService.signItem(item);
-        } catch (IOException e) {
-            LOGGER.error("could not singe item:{}", item);
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
-            throw new ServiceException("could not fetch item from service");
-        }
+        Item signedItem = pccService.signItem(item);
 
         var asset = signedItem.getAsset(collectionInfo.getCloudBand());
         if (asset.isEmpty()) {
