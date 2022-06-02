@@ -18,7 +18,7 @@ public interface CoverageService {
      * @return the cropped {@link GridCoverage2D}
      * @throws IOException if the coverage could not be fetched.
      */
-    GridCoverage2D getCroppedCoverageFromGeotiff(URL href, Geometry geometryAoi) throws IOException, FactoryException, TransformException;
+    GridCoverage2D fetchCoverageFromUrl(URL href, Geometry geometryAoi) throws IOException, FactoryException, TransformException;
 
     /**
      * calculates a ndvi image from a nir and red image

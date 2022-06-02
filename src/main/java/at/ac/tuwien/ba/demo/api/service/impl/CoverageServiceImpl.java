@@ -43,7 +43,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public GridCoverage2D getCroppedCoverageFromGeotiff(URL url, Geometry geometryAoi) throws IOException, FactoryException, TransformException {
+    public GridCoverage2D fetchCoverageFromUrl(URL url, Geometry geometryAoi) throws IOException, FactoryException, TransformException {
         LOGGER.debug("fetch tiff form url: {} and aoi:{}", url, geometryAoi);
 
         var coverage = this.getCoverage(url);
@@ -176,6 +176,7 @@ public class CoverageServiceImpl implements CoverageService {
         int width = raster.getWidth();
         int offsetX = raster.getMinX();
         int offsetY = raster.getMinY();
+        float pixelOffset = 0.5f;
 
         WritableRaster cropRaster = RasterFactory.createBandedRaster(
                 raster.getDataBuffer().getDataType(), width, height, numBands, null
@@ -189,10 +190,10 @@ public class CoverageServiceImpl implements CoverageService {
                 var absX = offsetX + relX;
                 var absY = offsetY + relY;
                 var coordinates = new Coordinate[5];
-                coordinates[0] = new Coordinate(absX - 0.5, absY + 0.5);
-                coordinates[1] = new Coordinate(absX + 0.5, absY + 0.5);
-                coordinates[2] = new Coordinate(absX + 0.5, absY - 0.5);
-                coordinates[3] = new Coordinate(absX - 0.5, absY - 0.5);
+                coordinates[0] = new Coordinate(absX - pixelOffset, absY + pixelOffset);
+                coordinates[1] = new Coordinate(absX + pixelOffset, absY + pixelOffset);
+                coordinates[2] = new Coordinate(absX + pixelOffset, absY - pixelOffset);
+                coordinates[3] = new Coordinate(absX - pixelOffset, absY - pixelOffset);
                 coordinates[4] = coordinates[0];
                 var outlinePixel = jtsFactory.createLinearRing(coordinates);
                 boolean keepPixel = geomGrid.intersects(outlinePixel);

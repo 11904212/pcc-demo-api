@@ -75,7 +75,7 @@ public class CloudyServiceImpl implements CloudyService {
 
         GridCoverage2D couldImage;
         try {
-            couldImage = coverageService.getCroppedCoverageFromGeotiff(new URL(asset.get().getHref()), aoi);
+            couldImage = coverageService.fetchCoverageFromUrl(new URL(asset.get().getHref()), aoi);
         } catch (IOException | FactoryException | TransformException e) {
             LOGGER.error("could not fetch tiff: {}", asset.get().getHref());
             LOGGER.error(e.getMessage());

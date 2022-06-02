@@ -120,7 +120,7 @@ public class ImageServiceImpl implements ImageService {
     private GridCoverage2D getGridCoverage2D(Asset asset, Geometry aoi) throws ServiceException {
         try {
             var url = new URL(asset.getHref());
-            return this.coverageService.getCroppedCoverageFromGeotiff(url, aoi);
+            return this.coverageService.fetchCoverageFromUrl(url, aoi);
         } catch (IOException | FactoryException | TransformException e) {
             var msg = String.format("could not fetch geotiff from planetary computer href:%s", asset.getHref());
             throw new ServiceException(msg, e);
