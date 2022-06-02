@@ -72,8 +72,12 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
             Thread.currentThread().interrupt();
             return Collections.emptyList();
         }
-
-        return results.getItems();
+        var itemList = results.getItems();
+        if (itemList != null && !itemList.isEmpty()) {
+            return itemList;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
