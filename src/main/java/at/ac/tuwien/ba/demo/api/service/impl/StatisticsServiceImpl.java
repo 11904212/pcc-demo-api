@@ -56,10 +56,12 @@ public class StatisticsServiceImpl implements StatisticsService {
             raster.getPixels(raster.getMinX(), raster.getMinY() + i, width, 1, row);
 
             for (float pixelVal : row) {
-                ndviMin = Math.min(pixelVal, ndviMin);
-                ndviMax = Math.max(pixelVal, ndviMax);
-                ndviAvg += pixelVal;
-                sumPixels += 1;
+                if (Float.isFinite(pixelVal)) {
+                    ndviMin = Math.min(pixelVal, ndviMin);
+                    ndviMax = Math.max(pixelVal, ndviMax);
+                    ndviAvg += pixelVal;
+                    sumPixels += 1;
+                }
             }
         }
         if (sumPixels == 0) {

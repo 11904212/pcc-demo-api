@@ -13,8 +13,10 @@ import org.geotools.coverage.processing.Operations;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.jts.JTS;
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -24,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.media.jai.RasterFactory;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -44,21 +48,10 @@ public class CoverageServiceImpl implements CoverageService {
 
         var coverage = this.getCoverage(url);
 
-        CoordinateReferenceSystem sourceCRS;
-        if (geometryAoi.getSRID() != 0) {
-            sourceCRS = CRS.decode("EPSG:" + geometryAoi.getSRID());
-        } else {
-            sourceCRS = CRS.decode("EPSG:4326");
-        }
+        var geomTargetCRS = transformGeometryToCoverageCrs(geometryAoi, coverage);
 
-        CoordinateReferenceSystem targetCRS = coverage.getCoordinateReferenceSystem();
-        MathTransform mathTransform = CRS.findMathTransform(sourceCRS, targetCRS);
+        return cropToGeometryIntersection(coverage, geomTargetCRS);
 
-        var geomTargetCRS = JTS.transform(geometryAoi, mathTransform);
-        ReferencedEnvelope envelope = new ReferencedEnvelope(geomTargetCRS.getEnvelopeInternal(), targetCRS);
-
-        Operations ops = new Operations(null);
-        return (GridCoverage2D) ops.crop(coverage, envelope);
     }
 
     @Override
@@ -145,5 +138,82 @@ public class CoverageServiceImpl implements CoverageService {
         GeoTiffReader reader = new GeoTiffReader(input);
 
         return reader.read(null);
+    }
+
+    private Geometry transformGeometryToCoverageCrs(Geometry geometry, GridCoverage2D coverage) throws FactoryException, TransformException {
+        CoordinateReferenceSystem sourceCRS;
+        if (geometry.getSRID() != 0) {
+            sourceCRS = CRS.decode("EPSG:" + geometry.getSRID());
+        } else {
+            sourceCRS = CRS.decode("EPSG:4326");
+        }
+
+        CoordinateReferenceSystem targetCRS = coverage.getCoordinateReferenceSystem();
+        MathTransform mathTransform = CRS.findMathTransform(sourceCRS, targetCRS);
+
+        return JTS.transform(geometry, mathTransform);
+    }
+
+    private GridCoverage2D cropToEnvelope(GridCoverage2D coverage, ReferencedEnvelope envelope) {
+        Operations ops = new Operations(null);
+        return  (GridCoverage2D) ops.crop(coverage, envelope);
+    }
+
+    private GridCoverage2D cropToGeometryIntersection(GridCoverage2D coverage, Geometry geometry) throws TransformException {
+
+        ReferencedEnvelope envelope = new ReferencedEnvelope(geometry.getEnvelopeInternal(), coverage.getCoordinateReferenceSystem());
+
+        var coveragePreCrop = cropToEnvelope(coverage, envelope);
+
+        var geomGrid = JTS.transform(geometry, coveragePreCrop.getGridGeometry().getCRSToGrid2D());
+
+        var jtsFactory = JTSFactoryFinder.getGeometryFactory();
+
+        var raster = coveragePreCrop.getRenderedImage().getData();
+
+        int numBands = raster.getNumBands();
+        int height = raster.getHeight();
+        int width = raster.getWidth();
+        int offsetX = raster.getMinX();
+        int offsetY = raster.getMinY();
+
+        WritableRaster cropRaster = RasterFactory.createBandedRaster(
+                raster.getDataBuffer().getDataType(), width, height, numBands, null
+        );
+        double[] pixelRow = new double[width * numBands];
+        for (int relY = 0; relY < height; relY++) {
+
+            raster.getPixels(raster.getMinX(), raster.getMinY() + relY, width, 1, pixelRow);
+
+            for (int relX = 0; relX < width; relX++) {
+                var absX = offsetX + relX;
+                var absY = offsetY + relY;
+                var coordinates = new Coordinate[5];
+                coordinates[0] = new Coordinate(absX - 0.5, absY + 0.5);
+                coordinates[1] = new Coordinate(absX + 0.5, absY + 0.5);
+                coordinates[2] = new Coordinate(absX + 0.5, absY - 0.5);
+                coordinates[3] = new Coordinate(absX - 0.5, absY - 0.5);
+                coordinates[4] = coordinates[0];
+                var outlinePixel = jtsFactory.createLinearRing(coordinates);
+                boolean keepPixel = geomGrid.intersects(outlinePixel);
+                int pixelPosRaster = (numBands * relX);
+                for (int m = 0; m < numBands; m++){
+                    if (keepPixel) {
+                        cropRaster.setSample(relX, relY, m, pixelRow[pixelPosRaster+m]);
+                    } else {
+                        cropRaster.setSample(relX, relY, m, 0);
+                    }
+
+                }
+            }
+        }
+
+        var factory = new GridCoverageFactory();
+
+        return factory.create(
+                coveragePreCrop.getName(),
+                cropRaster,
+                coveragePreCrop.getEnvelope()
+        );
     }
 }

@@ -15,7 +15,7 @@ public enum SupportedCollections {
             "B04",
             "visual",
             "SCL",
-            Set.of(4, 5, 6, 7)
+            Set.of(0, 4, 5, 6, 7)
     );
 
     private final String collectionId;
