@@ -4,6 +4,7 @@ import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.ItemInfoDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.ItemReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.ItemMapper;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.validation.AreaOfIntrestValidator;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
@@ -60,6 +61,7 @@ public class ItemEndpoint {
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final ItemMapper itemMapper;
     private final WktMapper wktMapper;
+    private final AreaOfIntrestValidator aoiValidator;
 
     @Autowired
     public ItemEndpoint(
@@ -67,13 +69,15 @@ public class ItemEndpoint {
             CloudyService cloudyService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             ItemMapper itemMapper,
-            WktMapper wktMapper
+            WktMapper wktMapper,
+            AreaOfIntrestValidator aoiValidator
     ) {
         this.pccService = pccService;
         this.cloudyService = cloudyService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.itemMapper = itemMapper;
         this.wktMapper = wktMapper;
+        this.aoiValidator = aoiValidator;
     }
 
     /**
@@ -166,6 +170,8 @@ public class ItemEndpoint {
             Optional<Integer> limit,
             Optional<Boolean> filterCloudy
     ) throws ValidationException, NotFoundException, ServiceException {
+
+        aoiValidator.validate(aresOfInterest);
 
         var dateTimeToDefault = dateTimeTo.orElse(ZonedDateTime.now(ZoneId.of("UTC")));
 

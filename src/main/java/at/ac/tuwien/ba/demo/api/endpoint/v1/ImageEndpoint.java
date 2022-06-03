@@ -3,6 +3,7 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.ImageReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageType;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.validation.AreaOfIntrestValidator;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
@@ -38,18 +39,21 @@ public class ImageEndpoint {
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final WktMapper wktMapper;
     private final ImageService imageService;
+    private final AreaOfIntrestValidator aoiValidator;
 
     @Autowired
     public ImageEndpoint(
             PlanetaryComputerService planetaryComputerService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             WktMapper wktMapper,
-            ImageService imageService
+            ImageService imageService,
+            AreaOfIntrestValidator aoiValidator
     ) {
         this.planetaryComputerService = planetaryComputerService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.wktMapper = wktMapper;
         this.imageService = imageService;
+        this.aoiValidator = aoiValidator;
     }
 
     @GetMapping(
@@ -75,7 +79,7 @@ public class ImageEndpoint {
         var geom = wktMapper.wktToGeometryCollection(areaOfInterest);
         dto.setAreaOfInterest(geom);
         dto.setImageType(imageType);
-        return getGeoTiff(dto);
+        return fetchGeoTiff(dto);
     }
 
     @PostMapping (
@@ -85,8 +89,15 @@ public class ImageEndpoint {
     public @ResponseBody byte[] getGeoTiff(
             @Valid
             @RequestBody ImageReqDto dto
-    ) throws NotFoundException, ServiceException {
+    ) throws NotFoundException, ServiceException, ValidationException {
         LOGGER.info("POST " + BASE_URL + " dto={}", dto);
+
+        return fetchGeoTiff(dto);
+    }
+
+    private byte[] fetchGeoTiff(ImageReqDto dto) throws NotFoundException, ServiceException, ValidationException {
+
+        aoiValidator.validate(dto.getAreaOfInterest());
 
         var optItem = this.planetaryComputerService.getItemById(dto.getItemId());
         if (optItem.isEmpty()) {
