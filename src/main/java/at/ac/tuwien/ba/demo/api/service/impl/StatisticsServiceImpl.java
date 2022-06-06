@@ -74,6 +74,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         dto.setNdviMax(ndviMax);
         dto.setNdviAvg(ndviAvg);
         dto.setItemId(item.getId());
+        dto.setDateTime(item.getDateTime().orElse(""));
 
         return dto;
     }

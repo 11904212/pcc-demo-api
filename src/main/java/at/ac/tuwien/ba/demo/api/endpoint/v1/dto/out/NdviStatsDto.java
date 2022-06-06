@@ -16,5 +16,6 @@ public class NdviStatsDto {
     private Float ndviMax;
 
     private String itemId;
+    private String dateTime;
 
 }
