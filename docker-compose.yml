@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  api:
+    image: "11904212.azurecr.io/pcc-demo-api:latest"
+    container_name: "pcc-demo-api"
+    restart: on-failure
+    ports:
+      - 80:8080
