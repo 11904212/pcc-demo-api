@@ -228,7 +228,7 @@ public class ItemEndpoint {
 
         AtomicBoolean error = new AtomicBoolean(false);
 
-        var cloudFreeItems=  items.parallelStream()
+        var cloudFreeItems=  items.stream()
                 .filter(item -> {
                     try {
                         return !this.cloudyService.isItemCloudy(item, aoiGeom);
