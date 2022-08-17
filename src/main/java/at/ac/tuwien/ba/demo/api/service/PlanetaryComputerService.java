@@ -1,8 +1,8 @@
 package at.ac.tuwien.ba.demo.api.service;
 
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
-import at.ac.tuwien.ba.stac.client.core.Item;
-import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
+import io.github11904212.java.stac.client.core.Item;
+import io.github11904212.java.stac.client.search.dto.QueryParameter;
 
 import java.util.List;
 import java.util.Optional;

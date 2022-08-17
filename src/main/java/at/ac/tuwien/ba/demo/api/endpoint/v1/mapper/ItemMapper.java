@@ -2,7 +2,7 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1.mapper;
 
 
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.ItemInfoDto;
-import at.ac.tuwien.ba.stac.client.core.Item;
+import io.github11904212.java.stac.client.core.Item;
 import org.springframework.stereotype.Component;
 
 @Component

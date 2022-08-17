@@ -6,7 +6,7 @@ import at.ac.tuwien.ba.demo.api.service.CoverageService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
-import at.ac.tuwien.ba.stac.client.core.Item;
+import io.github11904212.java.stac.client.core.Item;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.FactoryException;

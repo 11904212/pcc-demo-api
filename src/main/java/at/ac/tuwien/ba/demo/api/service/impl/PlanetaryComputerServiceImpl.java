@@ -2,19 +2,18 @@ package at.ac.tuwien.ba.demo.api.service.impl;
 
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
-import at.ac.tuwien.ba.pcc.PlanetaryComputer;
-import at.ac.tuwien.ba.pcc.PlanetaryComputerImpl;
-import at.ac.tuwien.ba.stac.client.StacClient;
-import at.ac.tuwien.ba.stac.client.core.Item;
-import at.ac.tuwien.ba.stac.client.search.ItemCollection;
-import at.ac.tuwien.ba.stac.client.search.dto.QueryParameter;
+import io.github11904212.java.stac.client.StacClient;
+import io.github11904212.java.stac.client.core.Item;
+import io.github11904212.java.stac.client.search.ItemCollection;
+import io.github11904212.java.stac.client.search.dto.QueryParameter;
+import io.github11904212.pcc.PlanetaryComputerClient;
+import io.github11904212.pcc.impl.PCClientImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +23,7 @@ import java.util.Optional;
 public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private PlanetaryComputer planetaryComputer;
+    private PlanetaryComputerClient planetaryComputer;
     private StacClient stacClient;
 
     public PlanetaryComputerServiceImpl() {
@@ -32,18 +31,7 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
     }
 
     private void init(){
-        // TODO: move this into pcc module
-        try {
-            this.planetaryComputer = new PlanetaryComputerImpl();
-        } catch (MalformedURLException e) {
-            LOGGER.error("""
-                a severe error has occurred.
-                the deposited url of the planetary computers is incorrectly formatted.
-                please report this incident to the developer of the module.
-                """);
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
-        }
+        this.planetaryComputer = new PCClientImpl();
         this.stacClient = this.planetaryComputer.getStacClientInstance();
     }
 
@@ -73,6 +61,7 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
             return Collections.emptyList();
         }
         var itemList = results.getItems();
+        //var filteredList = itemList.stream().filter(item -> )
         if (itemList != null && !itemList.isEmpty()) {
             return itemList;
         } else {
@@ -99,4 +88,5 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
 
         return getItemsByQuery(query);
     }
+    
 }

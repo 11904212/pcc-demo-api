@@ -2,7 +2,7 @@ package at.ac.tuwien.ba.demo.api.service;
 
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
-import at.ac.tuwien.ba.stac.client.core.Item;
+import io.github11904212.java.stac.client.core.Item;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.locationtech.jts.geom.Geometry;
 

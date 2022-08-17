@@ -5,7 +5,7 @@ import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.ImageService;
 import at.ac.tuwien.ba.demo.api.service.StatisticsService;
-import at.ac.tuwien.ba.stac.client.core.Item;
+import io.github11904212.java.stac.client.core.Item;
 import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
