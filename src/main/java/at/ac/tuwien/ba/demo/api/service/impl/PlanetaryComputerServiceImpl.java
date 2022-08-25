@@ -7,7 +7,6 @@ import io.github11904212.java.stac.client.core.Item;
 import io.github11904212.java.stac.client.search.ItemCollection;
 import io.github11904212.java.stac.client.search.dto.QueryParameter;
 import io.github11904212.pcc.PlanetaryComputerClient;
-import io.github11904212.pcc.impl.PCClientImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,17 +22,16 @@ import java.util.Optional;
 public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private PlanetaryComputerClient planetaryComputer;
-    private StacClient stacClient;
+    private final PlanetaryComputerClient planetaryComputer;
+    private final StacClient stacClient;
 
-    public PlanetaryComputerServiceImpl() {
-        this.init();
+    public PlanetaryComputerServiceImpl(
+            PlanetaryComputerClient planetaryComputer
+    ) {
+        this.planetaryComputer = planetaryComputer;
+        this.stacClient = planetaryComputer.getStacClientInstance();
     }
 
-    private void init(){
-        this.planetaryComputer = new PCClientImpl();
-        this.stacClient = this.planetaryComputer.getStacClientInstance();
-    }
 
     @Override
     public Optional<Item> getItemById(String id) {
