@@ -1,5 +1,6 @@
 package at.ac.tuwien.ba.demo.api.service.impl;
 
+import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import io.github11904212.java.stac.client.StacClient;
@@ -15,8 +16,10 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
@@ -80,11 +83,20 @@ public class PlanetaryComputerServiceImpl implements PlanetaryComputerService {
     }
 
     @Override
-    public List<Item> getItemsById(List<String> itemIds) {
+    public List<Item> getItemsById(List<String> itemIds) throws NotFoundException {
         var query = new QueryParameter();
         query.setIds(itemIds);
 
-        return getItemsByQuery(query);
+        var fetchedItems = getItemsByQuery(query);
+
+        if (fetchedItems.size() != itemIds.size()) {
+            Set<String> idSet = new HashSet<>(itemIds);
+            fetchedItems.forEach(item -> idSet.remove(item.getId()));
+            LOGGER.debug("could not find item with ids: {}", idSet);
+            throw new NotFoundException("could not find the items with IDs: " + idSet);
+        } else {
+            return fetchedItems;
+        }
     }
     
 }

@@ -1,5 +1,6 @@
 package at.ac.tuwien.ba.demo.api.service;
 
+import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import io.github11904212.java.stac.client.core.Item;
 import io.github11904212.java.stac.client.search.dto.QueryParameter;
@@ -35,5 +36,13 @@ public interface PlanetaryComputerService {
     Item signItem(Item item) throws ServiceException;
 
 
-    List<Item> getItemsById(List<String> itemIds);
+
+    /**
+     * get a list of entries by their IDs.
+     *
+     * @param itemIds the list of item IDs.
+     * @return the list of corresponding items.
+     * @throws NotFoundException if one or more items could not be found.
+     */
+    List<Item> getItemsById(List<String> itemIds) throws NotFoundException;
 }

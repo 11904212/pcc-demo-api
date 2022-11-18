@@ -3,6 +3,7 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.NdviStatsDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.NdviStatsReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
+import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.service.StatisticsService;
@@ -75,7 +76,7 @@ public class StatisticsEndpoint {
 
             @NotBlank
             @RequestParam String aresOfInterest
-    ) throws ValidationException {
+    ) throws ValidationException, NotFoundException {
         LOGGER.info("GET " + BASE_URL + "/ndvi?itemIds={}", itemIds);
 
         var collection = wktMapper.wktToGeometryCollection(aresOfInterest);
@@ -97,7 +98,7 @@ public class StatisticsEndpoint {
     public List<NdviStatsDto> getNdviStatistics(
             @Valid
             @RequestBody NdviStatsReqDto body
-            ) {
+            ) throws NotFoundException {
         LOGGER.info("POST " + BASE_URL + "/ndvi body={}", body);
 
         var geom = geoJsonToJtsConverter.convertGeometry(body.getAreaOfInterest());
@@ -107,7 +108,8 @@ public class StatisticsEndpoint {
         return getNdviStatistics(body.getItemIds(), collection);
     }
 
-    private List<NdviStatsDto> getNdviStatistics(List<String> itemIds, GeometryCollection collection) {
+    private List<NdviStatsDto> getNdviStatistics(List<String> itemIds, GeometryCollection collection)
+            throws NotFoundException {
         var items = planetaryComputerService.getItemsById(itemIds);
         return statisticsService.calsNdviStatistics(items, collection);
     }
