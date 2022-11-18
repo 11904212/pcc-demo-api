@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class CloudyServiceImpl implements CloudyService {
@@ -103,5 +105,26 @@ public class CloudyServiceImpl implements CloudyService {
         }
 
         return false;
+    }
+
+    @Override
+    public List<Item> filterCloudyItems(List<Item> items, Geometry aoi) throws ServiceException {
+        AtomicBoolean error = new AtomicBoolean(false);
+
+        var cloudFreeItems=  items.stream()
+                .filter(item -> {
+                    try {
+                        return !isItemCloudy(item, aoi);
+                    } catch (ServiceException e) {
+                        error.set(true);
+                        return false;
+                    }
+                }).toList();
+
+        if (error.get()) {
+            throw new ServiceException("error while checking cloudiness of items");
+        }
+
+        return cloudFreeItems;
     }
 }

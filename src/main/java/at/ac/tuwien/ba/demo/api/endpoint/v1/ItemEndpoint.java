@@ -11,11 +11,11 @@ import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.CloudyService;
 import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
-import io.github11904212.java.stac.client.core.Item;
 import io.github11904212.java.stac.client.search.dto.QueryParameter;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
 import mil.nga.sf.geojson.GeometryCollection;
+import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
@@ -206,7 +205,10 @@ public class ItemEndpoint {
         if ((filterCloudy.isPresent() && filterCloudy.get())
                 || (filterCloudy.isEmpty() && DEFAULT_FILTER_CLOUDY)
         ) {
-            resultList = filterCloudyItems(resultList, aresOfInterest);
+            resultList = this.cloudyService.filterCloudyItems(
+                    resultList,
+                    convertToJtsGeometry(aresOfInterest)
+            );
         }
 
         var result = resultList.stream().map(itemMapper::itemToDto).toList();
@@ -215,34 +217,14 @@ public class ItemEndpoint {
 
         return result;
     }
-    
-    private List<Item> filterCloudyItems(List<Item> items, GeometryCollection aresOfInterest) throws ValidationException, ServiceException {
-        org.locationtech.jts.geom.Geometry aoiGeom;
-        try {
 
-            aoiGeom = this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
+    private Geometry convertToJtsGeometry(GeometryCollection aresOfInterest) throws ValidationException {
+        try {
+            return this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
         } catch (IllegalArgumentException e) {
             LOGGER.error("could not convert GeoJson to JTS. geoJson:{}", aresOfInterest);
             throw new ValidationException("error while converting aresOfInterest. plead check the formatting again.");
         }
-
-        AtomicBoolean error = new AtomicBoolean(false);
-
-        var cloudFreeItems=  items.stream()
-                .filter(item -> {
-                    try {
-                        return !this.cloudyService.isItemCloudy(item, aoiGeom);
-                    } catch (ServiceException e) {
-                        error.set(true);
-                        return false;
-                    }
-                }).toList();
-
-        if (error.get()) {
-            throw new ServiceException("error while checking cloudiness of items");
-        }
-
-        return cloudFreeItems;
     }
 
     private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
