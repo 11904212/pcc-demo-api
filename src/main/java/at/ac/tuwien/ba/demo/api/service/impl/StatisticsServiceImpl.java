@@ -84,7 +84,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         var emptyStats = new NdviStatsDto();
 
-        return itemList.stream().map(item -> {
+        return itemList.parallelStream().map(item -> {
             try {
                 return calsNdviStatistics(item, areaOfInterest);
             } catch (ServiceException | NotFoundException e) {
