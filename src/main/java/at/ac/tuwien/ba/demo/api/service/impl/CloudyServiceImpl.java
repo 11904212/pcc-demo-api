@@ -2,9 +2,10 @@ package at.ac.tuwien.ba.demo.api.service.impl;
 
 import at.ac.tuwien.ba.demo.api.exception.RepositoryException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
+import at.ac.tuwien.ba.demo.api.reopsitory.PcCogRepository;
 import at.ac.tuwien.ba.demo.api.reopsitory.PcStacRepository;
 import at.ac.tuwien.ba.demo.api.service.CloudyService;
-import at.ac.tuwien.ba.demo.api.service.CoverageService;
+import at.ac.tuwien.ba.demo.api.service.ImageProcessingService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
 import io.github11904212.java.stac.client.core.Item;
@@ -30,17 +31,20 @@ public class CloudyServiceImpl implements CloudyService {
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
 
     private final PcStacRepository stacRepository;
-    private final CoverageService coverageService;
+
+    private final PcCogRepository cogRepository;
+
+    private final ImageProcessingService processingService;
 
     @Autowired
     public CloudyServiceImpl(
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             PcStacRepository stacRepository,
-            CoverageService coverageService
-    ) {
+            PcCogRepository cogRepository, ImageProcessingService processingService) {
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.stacRepository = stacRepository;
-        this.coverageService = coverageService;
+        this.cogRepository = cogRepository;
+        this.processingService = processingService;
     }
 
     @Override
@@ -83,11 +87,12 @@ public class CloudyServiceImpl implements CloudyService {
 
         GridCoverage2D couldImage;
         try {
-            couldImage = coverageService.fetchCoverageFromUrl(new URL(asset.get().getHref()), aoi);
+            couldImage = processingService.cropToAoi(
+                    cogRepository.fetchCoverageFromUrl(new URL(asset.get().getHref())),
+                    aoi
+            );
         } catch (IOException | FactoryException | TransformException e) {
-            LOGGER.error("could not fetch tiff: {}", asset.get().getHref());
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("could not fetch tiff: {}", asset.get().getHref(), e);
             throw new ServiceException("could not fetch image.");
         }
 

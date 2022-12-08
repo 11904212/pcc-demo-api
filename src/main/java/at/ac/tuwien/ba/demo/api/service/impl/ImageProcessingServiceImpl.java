@@ -1,16 +1,10 @@
 package at.ac.tuwien.ba.demo.api.service.impl;
 
-import at.ac.tuwien.ba.demo.api.service.CoverageService;
-import it.geosolutions.imageio.core.BasicAuthURI;
-import it.geosolutions.imageio.plugins.cog.CogImageReadParam;
-import it.geosolutions.imageioimpl.plugins.cog.CogImageInputStreamSpi;
-import it.geosolutions.imageioimpl.plugins.cog.CogImageReaderSpi;
-import it.geosolutions.imageioimpl.plugins.cog.CogSourceSPIProvider;
-import it.geosolutions.imageioimpl.plugins.cog.HttpRangeReader;
+
+import at.ac.tuwien.ba.demo.api.service.ImageProcessingService;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.processing.Operations;
-import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.JTSFactoryFinder;
@@ -31,24 +25,21 @@ import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.net.URL;
 
 @Service
-public class CoverageServiceImpl implements CoverageService {
+public class ImageProcessingServiceImpl implements ImageProcessingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public CoverageServiceImpl() {
+
+    public ImageProcessingServiceImpl() {
         System.setProperty("org.geotools.referencing.forceXY", "true");
     }
 
     @Override
-    public GridCoverage2D fetchCoverageFromUrl(URL url, Geometry geometryAoi) throws IOException, FactoryException, TransformException {
-        LOGGER.debug("fetch tiff form url: {} and aoi:{}", url, geometryAoi);
+    public GridCoverage2D cropToAoi(GridCoverage2D coverage, Geometry geometryAoi) throws FactoryException, TransformException {
 
-        var coverage = this.getCoverage(url);
-
-        var geomTargetCRS = transformGeometryToCoverageCrs(geometryAoi, coverage);
+        var geomTargetCRS = transformGeometryToCoverageCrs(geometryAoi, coverage.getCoordinateReferenceSystem());
 
         return cropToGeometryIntersection(coverage, geomTargetCRS);
 
@@ -105,7 +96,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public GridCoverage2D transFromCoverage(GridCoverage2D coverage2D, String epsgCodeTarget) throws FactoryException {
+    public GridCoverage2D transfromCoverageToCrs(GridCoverage2D coverage2D, String epsgCodeTarget) throws FactoryException {
         LOGGER.debug("transform coverage:{} to target crs:{}", coverage2D, epsgCodeTarget);
 
         CoordinateReferenceSystem targetCRS = CRS.decode(epsgCodeTarget);
@@ -124,23 +115,8 @@ public class CoverageServiceImpl implements CoverageService {
         return stream.toByteArray();
     }
 
-    private GridCoverage2D getCoverage(URL url) throws IOException {
-        BasicAuthURI cogUri = new BasicAuthURI(url, false);
-        HttpRangeReader rangeReader =
-                new HttpRangeReader(cogUri.getUri(), CogImageReadParam.DEFAULT_HEADER_LENGTH);
-        CogSourceSPIProvider input =
-                new CogSourceSPIProvider(
-                        cogUri,
-                        new CogImageReaderSpi(),
-                        new CogImageInputStreamSpi(),
-                        rangeReader.getClass().getName());
 
-        GeoTiffReader reader = new GeoTiffReader(input);
-
-        return reader.read(null);
-    }
-
-    private Geometry transformGeometryToCoverageCrs(Geometry geometry, GridCoverage2D coverage) throws FactoryException, TransformException {
+    private Geometry transformGeometryToCoverageCrs(Geometry geometry, CoordinateReferenceSystem referenceSystem) throws FactoryException, TransformException {
         CoordinateReferenceSystem sourceCRS;
         if (geometry.getSRID() != 0) {
             sourceCRS = CRS.decode("EPSG:" + geometry.getSRID());
@@ -148,7 +124,7 @@ public class CoverageServiceImpl implements CoverageService {
             sourceCRS = CRS.decode("EPSG:4326");
         }
 
-        CoordinateReferenceSystem targetCRS = coverage.getCoordinateReferenceSystem();
+        CoordinateReferenceSystem targetCRS = referenceSystem;
         MathTransform mathTransform = CRS.findMathTransform(sourceCRS, targetCRS);
 
         return JTS.transform(geometry, mathTransform);

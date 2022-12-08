@@ -2,7 +2,8 @@ package at.ac.tuwien.ba.demo.api.service.impl;
 
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
-import at.ac.tuwien.ba.demo.api.service.CoverageService;
+import at.ac.tuwien.ba.demo.api.reopsitory.PcCogRepository;
+import at.ac.tuwien.ba.demo.api.service.ImageProcessingService;
 import at.ac.tuwien.ba.demo.api.service.ImageService;
 import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
@@ -26,15 +27,19 @@ public class ImageServiceImpl implements ImageService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final CoverageService coverageService;
+    private final PcCogRepository cogRepository;
+
+    private final ImageProcessingService processingService;
     private final ItemService itemService;
 
     @Autowired
     public ImageServiceImpl(
-            CoverageService coverageService,
+            PcCogRepository cogRepository,
+            ImageProcessingService processingService,
             ItemService itemService
     ) {
-        this.coverageService = coverageService;
+        this.cogRepository = cogRepository;
+        this.processingService = processingService;
         this.itemService = itemService;
     }
 
@@ -101,7 +106,7 @@ public class ImageServiceImpl implements ImageService {
         var coverageRed = getGridCoverage2D(assetRed, aoi);
         var coverageNir = getGridCoverage2D(assetNir, aoi);
 
-        var coverageNdvi = coverageService.calcCoverageNdvi(coverageNir, coverageRed);
+        var coverageNdvi = processingService.calcCoverageNdvi(coverageNir, coverageRed);
 
         return transformGridCoverage2D(coverageNdvi, "EPSG:3857");
     }
@@ -120,7 +125,8 @@ public class ImageServiceImpl implements ImageService {
     private GridCoverage2D getGridCoverage2D(Asset asset, Geometry aoi) throws ServiceException {
         try {
             var url = new URL(asset.getHref());
-            return this.coverageService.fetchCoverageFromUrl(url, aoi);
+            var lazyCov = this.cogRepository.fetchCoverageFromUrl(url);
+            return this.processingService.cropToAoi(lazyCov, aoi);
         } catch (IOException | FactoryException | TransformException e) {
             var msg = String.format("could not fetch geotiff from planetary computer href:%s", asset.getHref());
             throw new ServiceException(msg, e);
@@ -129,7 +135,7 @@ public class ImageServiceImpl implements ImageService {
 
     private GridCoverage2D transformGridCoverage2D(GridCoverage2D coverage, String crsCode) throws ServiceException {
         try {
-            return this.coverageService.transFromCoverage(coverage, crsCode);
+            return this.processingService.transfromCoverageToCrs(coverage, crsCode);
         } catch (FactoryException e) {
             var msg = String.format("could not transform coverage to crs:%s", crsCode);
             throw new ServiceException(msg, e);
@@ -138,7 +144,7 @@ public class ImageServiceImpl implements ImageService {
 
     private byte[] coverageToBinary(GridCoverage2D coverage) throws ServiceException {
         try {
-            return this.coverageService.coverageToBinary(coverage);
+            return this.processingService.coverageToBinary(coverage);
         } catch (IOException e) {
             var msg = "could not return binary";
             throw new ServiceException(msg, e);

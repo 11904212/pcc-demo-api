@@ -6,19 +6,18 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
 
 import java.io.IOException;
-import java.net.URL;
 
 
-public interface CoverageService {
+public interface ImageProcessingService {
 
     /**
-     * fetches a geotiff and returns a {@link GridCoverage2D} cropped to the given area of interest
-     * @param href the {@link URL} of the requested geotiff
-     * @param geometryAoi the requested area of interest
+     * crops a {@link GridCoverage2D} to a given area of interest
+     * @param coverage2D the {@link GridCoverage2D} to be cropped.
+     * @param geometryAoi the area of interest
      * @return the cropped {@link GridCoverage2D}
      * @throws IOException if the coverage could not be fetched.
      */
-    GridCoverage2D fetchCoverageFromUrl(URL href, Geometry geometryAoi) throws IOException, FactoryException, TransformException;
+    GridCoverage2D cropToAoi(GridCoverage2D coverage2D, Geometry geometryAoi) throws FactoryException, TransformException;
 
     /**
      * calculates a ndvi image from a nir and red image
@@ -36,7 +35,7 @@ public interface CoverageService {
      * @return the transformed coverage
      * @throws FactoryException if given crs is unknown.
      */
-    GridCoverage2D transFromCoverage(GridCoverage2D coverage2D, String epsgCodeTarget) throws FactoryException;
+    GridCoverage2D transfromCoverageToCrs(GridCoverage2D coverage2D, String epsgCodeTarget) throws FactoryException;
 
     /**
      * converts a {@link GridCoverage2D} into a binary representation of it

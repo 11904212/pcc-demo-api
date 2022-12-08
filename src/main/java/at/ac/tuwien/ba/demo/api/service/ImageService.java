@@ -52,4 +52,5 @@ public interface ImageService {
      */
     GridCoverage2D getNdviImage(Item item, Geometry aoi) throws NotFoundException, ServiceException;
 
+
 }
