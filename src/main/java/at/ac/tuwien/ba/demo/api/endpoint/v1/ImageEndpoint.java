@@ -2,6 +2,7 @@ package at.ac.tuwien.ba.demo.api.endpoint.v1;
 
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.ImageReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.ImageType;
+import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.GeoTiffMapper;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.validation.AreaOfIntrestValidator;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
@@ -38,6 +39,8 @@ public class ImageEndpoint {
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final WktMapper wktMapper;
 
+    private final GeoTiffMapper geoTiffMapper;
+
     private final ItemService itemService;
     private final ImageService imageService;
     private final AreaOfIntrestValidator aoiValidator;
@@ -46,12 +49,14 @@ public class ImageEndpoint {
     public ImageEndpoint(
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             WktMapper wktMapper,
+            GeoTiffMapper geoTiffMapper,
             ItemService itemService,
             ImageService imageService,
             AreaOfIntrestValidator aoiValidator
     ) {
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.wktMapper = wktMapper;
+        this.geoTiffMapper = geoTiffMapper;
         this.itemService = itemService;
         this.imageService = imageService;
         this.aoiValidator = aoiValidator;
@@ -105,9 +110,11 @@ public class ImageEndpoint {
         var aoi = this.geoJsonToJtsConverter.convertGeometry(dto.getAreaOfInterest());
         aoi.setSRID(4326);
 
-        return switch (dto.getImageType()) {
-            case TCI -> imageService.getTciGeoTiff(item, aoi);
-            case NDVI -> imageService.getNdviGeoTiff(item, aoi);
+        var coverage = switch (dto.getImageType()) {
+            case TCI -> imageService.getTciImage(item, aoi);
+            case NDVI -> imageService.getNdviImage(item, aoi);
         };
+
+        return geoTiffMapper.coverageToBinary(coverage);
     }
 }

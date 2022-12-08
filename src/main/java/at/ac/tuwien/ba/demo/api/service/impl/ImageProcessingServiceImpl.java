@@ -5,7 +5,6 @@ import at.ac.tuwien.ba.demo.api.service.ImageProcessingService;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.processing.Operations;
-import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -22,8 +21,6 @@ import org.springframework.stereotype.Service;
 
 import javax.media.jai.RasterFactory;
 import java.awt.image.WritableRaster;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 
 @Service
@@ -104,19 +101,7 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
     }
 
 
-    @Override
-    public byte[] coverageToBinary(GridCoverage2D coverage2D) throws IOException {
-        LOGGER.debug("writing binary file of {}", coverage2D);
-
-        var stream = new ByteArrayOutputStream();
-        var writer = new GeoTiffWriter(stream);
-        writer.write(coverage2D, null);
-        writer.dispose();
-        return stream.toByteArray();
-    }
-
-
-    private Geometry transformGeometryToCoverageCrs(Geometry geometry, CoordinateReferenceSystem referenceSystem) throws FactoryException, TransformException {
+    private Geometry transformGeometryToCoverageCrs(Geometry geometry, CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
         CoordinateReferenceSystem sourceCRS;
         if (geometry.getSRID() != 0) {
             sourceCRS = CRS.decode("EPSG:" + geometry.getSRID());
@@ -124,7 +109,6 @@ public class ImageProcessingServiceImpl implements ImageProcessingService {
             sourceCRS = CRS.decode("EPSG:4326");
         }
 
-        CoordinateReferenceSystem targetCRS = referenceSystem;
         MathTransform mathTransform = CRS.findMathTransform(sourceCRS, targetCRS);
 
         return JTS.transform(geometry, mathTransform);

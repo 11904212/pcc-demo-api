@@ -5,17 +5,17 @@ import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
 
-import java.io.IOException;
-
 
 public interface ImageProcessingService {
 
     /**
      * crops a {@link GridCoverage2D} to a given area of interest
      * @param coverage2D the {@link GridCoverage2D} to be cropped.
-     * @param geometryAoi the area of interest
+     * @param geometryAoi the area of interest as {@link Geometry}, crs (SRID) will be used if set
+     *                    otherwise WGS84 will be assumed.
      * @return the cropped {@link GridCoverage2D}
-     * @throws IOException if the coverage could not be fetched.
+     * @throws FactoryException if given crs is unknown.
+     * @throws TransformException if the transformation to the aoi crs failed.
      */
     GridCoverage2D cropToAoi(GridCoverage2D coverage2D, Geometry geometryAoi) throws FactoryException, TransformException;
 
@@ -36,12 +36,5 @@ public interface ImageProcessingService {
      * @throws FactoryException if given crs is unknown.
      */
     GridCoverage2D transfromCoverageToCrs(GridCoverage2D coverage2D, String epsgCodeTarget) throws FactoryException;
-
-    /**
-     * converts a {@link GridCoverage2D} into a binary representation of it
-     * @param coverage2D the {@link GridCoverage2D} to convert
-     * @return the coverage in binary from
-     */
-    byte[] coverageToBinary(GridCoverage2D coverage2D) throws IOException;
 
 }

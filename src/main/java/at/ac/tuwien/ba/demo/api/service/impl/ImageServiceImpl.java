@@ -44,22 +44,6 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public byte[] getTciGeoTiff(Item item, Geometry aoi) throws ServiceException, NotFoundException {
-
-        var transformedCoverage = getTciImage(item, aoi);
-
-        return coverageToBinary(transformedCoverage);
-    }
-
-    @Override
-    public byte[] getNdviGeoTiff(Item item, Geometry aoi) throws NotFoundException, ServiceException {
-
-        var transformedCoverage = getNdviImage(item, aoi);
-
-        return coverageToBinary(transformedCoverage);
-    }
-
-    @Override
     public GridCoverage2D getTciImage(Item item, Geometry aoi) throws ServiceException, NotFoundException {
 
         var collectionInfo = getCollectionInfo(item);
@@ -138,15 +122,6 @@ public class ImageServiceImpl implements ImageService {
             return this.processingService.transfromCoverageToCrs(coverage, crsCode);
         } catch (FactoryException e) {
             var msg = String.format("could not transform coverage to crs:%s", crsCode);
-            throw new ServiceException(msg, e);
-        }
-    }
-
-    private byte[] coverageToBinary(GridCoverage2D coverage) throws ServiceException {
-        try {
-            return this.processingService.coverageToBinary(coverage);
-        } catch (IOException e) {
-            var msg = "could not return binary";
             throw new ServiceException(msg, e);
         }
     }
