@@ -8,14 +8,10 @@ import at.ac.tuwien.ba.demo.api.endpoint.v1.validation.AreaOfIntrestValidator;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
-import at.ac.tuwien.ba.demo.api.service.CloudyService;
-import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
-import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
-import io.github11904212.java.stac.client.search.dto.QueryParameter;
+import at.ac.tuwien.ba.demo.api.service.ItemService;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
 import mil.nga.sf.geojson.GeometryCollection;
-import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +36,6 @@ import javax.validation.constraints.Positive;
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,25 +50,21 @@ public class ItemEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final PlanetaryComputerService pccService;
-    private final CloudyService cloudyService;
-    private final GeoJsonToJtsConverter geoJsonToJtsConverter;
+    private final ItemService itemService;
+
     private final ItemMapper itemMapper;
     private final WktMapper wktMapper;
     private final AreaOfIntrestValidator aoiValidator;
 
     @Autowired
     public ItemEndpoint(
-            PlanetaryComputerService pccService,
-            CloudyService cloudyService,
-            GeoJsonToJtsConverter geoJsonToJtsConverter,
-            ItemMapper itemMapper,
+
+            ItemService itemService, ItemMapper itemMapper,
             WktMapper wktMapper,
             AreaOfIntrestValidator aoiValidator
     ) {
-        this.pccService = pccService;
-        this.cloudyService = cloudyService;
-        this.geoJsonToJtsConverter = geoJsonToJtsConverter;
+        this.itemService = itemService;
+
         this.itemMapper = itemMapper;
         this.wktMapper = wktMapper;
         this.aoiValidator = aoiValidator;
@@ -180,52 +171,23 @@ public class ItemEndpoint {
             throw new ValidationException("the given dateTimeFrom must be before the given dateTimeTo");
         }
 
-        var query = new QueryParameter();
-        query.setCollections(collections);
+        var items = this.itemService.getItemsInInterval(
+                collections,
+                dateTimeFrom,
+                dateTimeToDefault,
+                aresOfInterest,
+                limit.orElse(DEFAULT_RESULTS),
+                filterCloudy.orElse(DEFAULT_FILTER_CLOUDY)
+        );
 
-        if (dateTimeFrom.isEqual(dateTimeToDefault)) {
-            query.setDatetime(dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        } else {
-            query.setDatetime(String.format("%s/%s",
-                    dateTimeFrom.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                    dateTimeToDefault.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-            );
-        }
-
-        query.setIntersects(aresOfInterest);
-        query.setLimit(limit.orElse(DEFAULT_RESULTS));
-
-
-        var resultList = this.pccService.getItemsByQuery(query);
-        if (resultList.isEmpty()) {
-            LOGGER.debug("could not find items for query: {}", query);
+        if (items.isEmpty()) {
+            LOGGER.debug("could not find items for from: {}, to: {} and aoi: {}", dateTimeFrom, dateTimeTo, aresOfInterest);
             throw new NotFoundException("could not find items");
         }
 
-        if ((filterCloudy.isPresent() && filterCloudy.get())
-                || (filterCloudy.isEmpty() && DEFAULT_FILTER_CLOUDY)
-        ) {
-            resultList = this.cloudyService.filterCloudyItems(
-                    resultList,
-                    convertToJtsGeometry(aresOfInterest)
-            );
-        }
-
-        var result = resultList.stream().map(itemMapper::itemToDto).toList();
-
-        LOGGER.debug("returned {} items", result.size());
-
-        return result;
+        return items.stream().map(itemMapper::itemToDto).toList();
     }
 
-    private Geometry convertToJtsGeometry(GeometryCollection aresOfInterest) throws ValidationException {
-        try {
-            return this.geoJsonToJtsConverter.convertGeometryCollection(aresOfInterest);
-        } catch (IllegalArgumentException e) {
-            LOGGER.error("could not convert GeoJson to JTS. geoJson:{}", aresOfInterest);
-            throw new ValidationException("error while converting aresOfInterest. plead check the formatting again.");
-        }
-    }
 
     private GeometryCollection geoJsonToGeometryCollection(GeoJsonObject geoJson) {
         return new GeometryCollection(

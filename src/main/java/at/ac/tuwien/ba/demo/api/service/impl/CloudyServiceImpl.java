@@ -1,9 +1,10 @@
 package at.ac.tuwien.ba.demo.api.service.impl;
 
+import at.ac.tuwien.ba.demo.api.exception.RepositoryException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
+import at.ac.tuwien.ba.demo.api.reopsitory.PcStacRepository;
 import at.ac.tuwien.ba.demo.api.service.CloudyService;
 import at.ac.tuwien.ba.demo.api.service.CoverageService;
-import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
 import io.github11904212.java.stac.client.core.Item;
@@ -26,19 +27,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CloudyServiceImpl implements CloudyService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-    private final PlanetaryComputerService pccService;
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
+
+    private final PcStacRepository stacRepository;
     private final CoverageService coverageService;
 
     @Autowired
     public CloudyServiceImpl(
-            PlanetaryComputerService pccService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
+            PcStacRepository stacRepository,
             CoverageService coverageService
     ) {
-        this.pccService = pccService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
+        this.stacRepository = stacRepository;
         this.coverageService = coverageService;
     }
 
@@ -65,7 +66,12 @@ public class CloudyServiceImpl implements CloudyService {
             }
         }
 
-        Item signedItem = pccService.signItem(item);
+        Item signedItem;
+        try {
+            signedItem = stacRepository.signItem(item);
+        } catch (RepositoryException e) {
+            throw new ServiceException(e);
+        }
 
         var asset = signedItem.getAsset(collectionInfo.getCloudBand());
         if (asset.isEmpty()) {

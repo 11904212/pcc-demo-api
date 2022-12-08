@@ -8,7 +8,7 @@ import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.ImageService;
-import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
+import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,23 +35,24 @@ public class ImageEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final PlanetaryComputerService planetaryComputerService;
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
     private final WktMapper wktMapper;
+
+    private final ItemService itemService;
     private final ImageService imageService;
     private final AreaOfIntrestValidator aoiValidator;
 
     @Autowired
     public ImageEndpoint(
-            PlanetaryComputerService planetaryComputerService,
             GeoJsonToJtsConverter geoJsonToJtsConverter,
             WktMapper wktMapper,
+            ItemService itemService,
             ImageService imageService,
             AreaOfIntrestValidator aoiValidator
     ) {
-        this.planetaryComputerService = planetaryComputerService;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
         this.wktMapper = wktMapper;
+        this.itemService = itemService;
         this.imageService = imageService;
         this.aoiValidator = aoiValidator;
     }
@@ -99,14 +100,7 @@ public class ImageEndpoint {
 
         aoiValidator.validate(dto.getAreaOfInterest());
 
-        var optItem = this.planetaryComputerService.getItemById(dto.getItemId());
-        if (optItem.isEmpty()) {
-            var msg = "could not find item with id: " + dto.getItemId();
-            LOGGER.info(msg);
-            throw new NotFoundException(msg);
-        }
-
-        var item =  optItem.get();
+        var item =  this.itemService.getItemById(dto.getItemId());
 
         var aoi = this.geoJsonToJtsConverter.convertGeometry(dto.getAreaOfInterest());
         aoi.setSRID(4326);

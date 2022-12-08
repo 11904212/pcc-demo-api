@@ -4,8 +4,9 @@ import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.out.NdviStatsDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.dto.in.NdviStatsReqDto;
 import at.ac.tuwien.ba.demo.api.endpoint.v1.mapper.WktMapper;
 import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
+import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
-import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
+import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.service.StatisticsService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
 import org.geotools.geometry.jts.JTSFactoryFinder;
@@ -38,19 +39,19 @@ public class StatisticsEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final PlanetaryComputerService planetaryComputerService;
+    private final ItemService itemService;
     private final StatisticsService statisticsService;
     private final WktMapper wktMapper;
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
 
     @Autowired
     public StatisticsEndpoint(
-            PlanetaryComputerService planetaryComputerService,
+            ItemService itemService,
             StatisticsService statisticsService,
             WktMapper wktMapper,
             GeoJsonToJtsConverter geoJsonToJtsConverter
     ) {
-        this.planetaryComputerService = planetaryComputerService;
+        this.itemService = itemService;
         this.statisticsService = statisticsService;
         this.wktMapper = wktMapper;
         this.geoJsonToJtsConverter = geoJsonToJtsConverter;
@@ -76,7 +77,7 @@ public class StatisticsEndpoint {
 
             @NotBlank
             @RequestParam String aresOfInterest
-    ) throws ValidationException, NotFoundException {
+    ) throws ValidationException, NotFoundException, ServiceException {
         LOGGER.info("GET " + BASE_URL + "/ndvi?itemIds={}", itemIds);
 
         var collection = wktMapper.wktToGeometryCollection(aresOfInterest);
@@ -98,7 +99,7 @@ public class StatisticsEndpoint {
     public List<NdviStatsDto> getNdviStatistics(
             @Valid
             @RequestBody NdviStatsReqDto body
-            ) throws NotFoundException {
+            ) throws NotFoundException, ServiceException {
         LOGGER.info("POST " + BASE_URL + "/ndvi body={}", body);
 
         var geom = geoJsonToJtsConverter.convertGeometry(body.getAreaOfInterest());
@@ -109,8 +110,8 @@ public class StatisticsEndpoint {
     }
 
     private List<NdviStatsDto> getNdviStatistics(List<String> itemIds, GeometryCollection collection)
-            throws NotFoundException {
-        var items = planetaryComputerService.getItemsById(itemIds);
+            throws NotFoundException, ServiceException {
+        var items = this.itemService.getItemsById(itemIds);
         return statisticsService.calsNdviStatistics(items, collection);
     }
 

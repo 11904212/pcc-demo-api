@@ -4,7 +4,7 @@ import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.service.CoverageService;
 import at.ac.tuwien.ba.demo.api.service.ImageService;
-import at.ac.tuwien.ba.demo.api.service.PlanetaryComputerService;
+import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.util.SupportedCollections;
 import io.github11904212.java.stac.client.core.Asset;
 import io.github11904212.java.stac.client.core.Item;
@@ -27,15 +27,15 @@ public class ImageServiceImpl implements ImageService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final CoverageService coverageService;
-    private final PlanetaryComputerService planetaryComputerService;
+    private final ItemService itemService;
 
     @Autowired
     public ImageServiceImpl(
             CoverageService coverageService,
-            PlanetaryComputerService planetaryComputerService
+            ItemService itemService
     ) {
         this.coverageService = coverageService;
-        this.planetaryComputerService = planetaryComputerService;
+        this.itemService = itemService;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class ImageServiceImpl implements ImageService {
 
         var collectionInfo = getCollectionInfo(item);
 
-        var signedItem = planetaryComputerService.signItem(item);
+        var signedItem = itemService.signItem(item);
 
         var optAsset = signedItem.getAsset(collectionInfo.getTciBand());
         if (optAsset.isEmpty()) {
@@ -81,7 +81,7 @@ public class ImageServiceImpl implements ImageService {
 
         var collectionInfo = getCollectionInfo(item);
 
-        var signedItem = planetaryComputerService.signItem(item);
+        var signedItem = itemService.signItem(item);
 
         var optAssetRed = signedItem.getAsset(collectionInfo.getRedBand());
         var optAssetNir = signedItem.getAsset(collectionInfo.getNirBand());
