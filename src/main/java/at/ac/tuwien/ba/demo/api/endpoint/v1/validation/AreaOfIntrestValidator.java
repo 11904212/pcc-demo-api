@@ -31,6 +31,8 @@ public class AreaOfIntrestValidator {
 
     private static final Double ALLOWED_AREA = 10d; // km2
 
+    private static final Double AREA_TOLERANCE = 0.1; // 10%
+
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
 
     @Autowired
@@ -72,7 +74,7 @@ public class AreaOfIntrestValidator {
 
     private void checkRequestedArea(Geometry geometry) throws ValidationException {
         var area = calcArea(geometry);
-        if (area > (ALLOWED_AREA * 1000000) ) {
+        if (area > (ALLOWED_AREA * AREA_TOLERANCE * 1000000) ) {
             throw new ValidationException("the requested area of interest is to big. maximum is: " + ALLOWED_AREA + "km2");
         }
     }
