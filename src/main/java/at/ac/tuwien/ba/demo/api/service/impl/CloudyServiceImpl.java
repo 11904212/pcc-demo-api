@@ -122,7 +122,7 @@ public class CloudyServiceImpl implements CloudyService {
     public List<Item> filterCloudyItems(List<Item> items, Geometry aoi) throws ServiceException {
         AtomicBoolean error = new AtomicBoolean(false);
 
-        var cloudFreeItems=  items.parallelStream()
+        var cloudFreeItems=  items.stream()
                 .filter(item -> {
                     try {
                         return !isItemCloudy(item, aoi);
