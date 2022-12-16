@@ -31,7 +31,7 @@ public class AreaOfIntrestValidator {
 
     private static final Double ALLOWED_AREA = 10d; // km2
 
-    private static final Double AREA_TOLERANCE = 0.1; // 10%
+    private static final Double AREA_TOLERANCE = 1.1; // 10%
 
     private final GeoJsonToJtsConverter geoJsonToJtsConverter;
 
