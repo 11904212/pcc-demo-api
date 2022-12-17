@@ -182,7 +182,6 @@ public class ItemEndpoint {
 
         if (items.isEmpty()) {
             LOGGER.debug("could not find items for from: {}, to: {} and aoi: {}", dateTimeFrom, dateTimeTo, aresOfInterest);
-            throw new NotFoundException("could not find items");
         }
 
         return items.stream().map(itemMapper::itemToDto).toList();
