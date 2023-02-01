@@ -38,6 +38,10 @@ public class PcCogRepositoryImpl implements PcCogRepository {
 
         GeoTiffReader reader = new GeoTiffReader(input);
 
-        return reader.read(null);
+        GridCoverage2D coverage = reader.read(null);
+
+        reader.dispose();
+
+        return coverage;
     }
 }
