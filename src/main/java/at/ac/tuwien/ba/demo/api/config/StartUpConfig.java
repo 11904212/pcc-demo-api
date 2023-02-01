@@ -32,6 +32,12 @@ public class StartUpConfig implements ApplicationListener<ApplicationReadyEvent>
      */
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
+        // enforce longitude, latitude order
+        System.setProperty("org.geotools.referencing.forceXY", "true");
+
+        // never relaeas the EPSG database to prevent long response times.
+        // see: https://github.com/geotools/geotools/blob/main/modules/library/referencing/src/main/java/org/geotools/referencing/factory/epsg/ThreadedEpsgFactory.java
+        System.setProperty("org.geotools.epsg.factory.timeout", "-1");
         LOGGER.info("app started, trying to fetch a random image");
         try {
             imageEndpoint.getGeoTiff(
