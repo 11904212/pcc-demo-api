@@ -94,7 +94,7 @@ public class PcStacRepositoryImpl implements PcStacRepository {
         ItemCollection results;
         try {
             results = this.stacClient.search(query);
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             LOGGER.error("could not find items with query:{}", query);
             throw new RepositoryException(e);
         } catch (InterruptedException e) {

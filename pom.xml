@@ -17,15 +17,13 @@
 	<properties>
 		<java.version>17</java.version>
 
-		<stac-client.version>1.0.0-alpha.0.6</stac-client.version>
-		<planetarycomputer-client.version>alpha.0.3</planetarycomputer-client.version>
+		<planetarycomputer-client.version>alpha.0.4</planetarycomputer-client.version>
 
 		<geotools.version>27.2</geotools.version>
 		<imageio.ext.version>1.4.7</imageio.ext.version>
-		<jackson.version>2.14.0</jackson.version>
-		<mil.nga.sf.version>2.2.0</mil.nga.sf.version>
-		<mil.nga.sf.sf-geojson.version>3.3.0</mil.nga.sf.sf-geojson.version>
-		<mil.nga.sf.sf-wkt.version>1.2.0</mil.nga.sf.sf-wkt.version>
+		<mil.nga.sf.sf-geojson.version>3.3.2</mil.nga.sf.sf-geojson.version>
+		<mil.nga.sf.sf-wkt.version>1.2.2</mil.nga.sf.sf-wkt.version>
+		<springdoc-openapi-ui.version>1.6.12</springdoc-openapi-ui.version>
 	</properties>
 
 	<dependencies>
@@ -41,7 +39,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-ui</artifactId>
-			<version>1.6.12</version>
+			<version>${springdoc-openapi-ui.version}</version>
 		</dependency>
 
 		<dependency>
@@ -56,12 +54,6 @@
 		</dependency>
 
 		<!-- own modules -->
-		<dependency>
-			<groupId>io.github.11904212</groupId>
-			<artifactId>java-stac-client</artifactId>
-			<version>${stac-client.version}</version>
-		</dependency>
-
 		<dependency>
 			<groupId>io.github.11904212</groupId>
 			<artifactId>planetarycomputer-client</artifactId>
@@ -88,12 +80,6 @@
 		</dependency>
 
 		<!-- National Geospatial-Intelligence Agency https://github.com/ngageoint -->
-		<dependency>
-			<groupId>mil.nga</groupId>
-			<artifactId>sf</artifactId>
-			<version>${mil.nga.sf.version}</version>
-		</dependency>
-
 		<dependency>
 			<groupId>mil.nga.sf</groupId>
 			<artifactId>sf-geojson</artifactId>
