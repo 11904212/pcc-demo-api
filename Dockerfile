@@ -14,4 +14,4 @@ RUN mvn package
 # Stage 2: run app
 FROM amazoncorretto:17
 COPY --from=build /usr/local/app/target/*.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-Xmx256m","-XX:+UseSerialGC","-XX:+UseContainerSupport","-XX:+PrintFlagsFinal","-jar","/app.jar"]
