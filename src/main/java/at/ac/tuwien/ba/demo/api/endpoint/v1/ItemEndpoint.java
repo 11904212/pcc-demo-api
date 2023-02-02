@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,16 +77,18 @@ public class ItemEndpoint {
     /**
      * a query endpoint to get items matching the given query parameters.
      *
-     * @param collections a list of ids which should be searched.
+     * @param collections the list of collections which should be searched.
      * @param dateTimeFrom items should not be older than this date.
      * @param dateTimeTo items should not be newer than this date (default is current datetime).
      * @param aresOfInterest items should intersect with this area of interest.
      *                       the string must be formatted as well known text and
      *                       the coordinates must be given in WGS84 format (longitude, latitude).
-     * @param limit an upper limit on the number of results returned (default 100)
+     *                       given area must be less the 10km2.
+     * @param limit an upper limit on the number of results returned (default 100).
+     * @param filterCloudy indicates whether only cloud-free images are returned.
      * @return the list of matching {@link ItemInfoDto}
      */
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
             @Schema(example = SAMPLE_COLLECTION)
@@ -138,7 +141,7 @@ public class ItemEndpoint {
      * @param itemReqDto the request body containing all param as the get methode
      * @return the list of matching {@link ItemInfoDto}
      */
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
             @Valid

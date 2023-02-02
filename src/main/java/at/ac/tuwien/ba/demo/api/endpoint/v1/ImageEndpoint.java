@@ -65,6 +65,17 @@ public class ImageEndpoint {
         this.aoiValidator = aoiValidator;
     }
 
+    /**
+     * fetch a geotiff image.
+     *
+     * @param itemId the id of the item to be used as data source.
+     * @param areaOfInterest items should intersect with this area of interest.
+     *                       the string must be formatted as well known text and
+     *                       the coordinates must be given in WGS84 format (longitude, latitude).
+     *                       given area must be less the 10km2.
+     * @param imageType the {@link ImageType} of the requested image.
+     * @return the image as geotiff.
+     */
     @GetMapping(
             value = "geotiff",
             produces = "image/tiff"
@@ -94,6 +105,12 @@ public class ImageEndpoint {
         return fetchGeoTiff(dto);
     }
 
+    /**
+     * fetch a geotiff image.
+     *
+     * @param dto the request body containing all param as the get methode.
+     * @return the image as geotiff.
+     */
     @PostMapping (
             value = "geotiff",
             produces = "image/tiff"
