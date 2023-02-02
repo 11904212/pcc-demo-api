@@ -11,6 +11,7 @@ import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.ImageService;
 import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.lang.invoke.MethodHandles;
+
+import static at.ac.tuwien.ba.demo.api.endpoint.v1.dto.SampleConst.*;
 
 @RestController
 @RequestMapping(ImageEndpoint.BASE_URL)
@@ -67,12 +70,15 @@ public class ImageEndpoint {
             produces = "image/tiff"
     )
     public @ResponseBody byte[] getGeoTiff(
+            @Schema(example = SAMPLE_ITEM_ID)
             @NotBlank
             @RequestParam String itemId,
 
+            @Schema(example = SAMPLE_WKT)
             @NotBlank
             @RequestParam String areaOfInterest,
 
+            @Schema(example = SAMPLE_IMAGE_TYPE)
             @NotNull
             @RequestParam ImageType imageType
     ) throws NotFoundException, ServiceException, ValidationException {

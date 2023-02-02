@@ -9,6 +9,7 @@ import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.ItemService;
 import at.ac.tuwien.ba.demo.api.service.StatisticsService;
 import at.ac.tuwien.ba.demo.api.util.GeoJsonToJtsConverter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
@@ -30,6 +31,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+
+import static at.ac.tuwien.ba.demo.api.endpoint.v1.dto.SampleConst.SAMPLE_ITEM_LIST;
+import static at.ac.tuwien.ba.demo.api.endpoint.v1.dto.SampleConst.SAMPLE_WKT;
 
 @RestController
 @RequestMapping(StatisticsEndpoint.BASE_URL)
@@ -72,9 +76,11 @@ public class StatisticsEndpoint {
     @GetMapping(value = "ndvi")
     @ResponseStatus(HttpStatus.OK)
     public List<NdviStatsDto> getNdviStatistics(
+            @Schema(example = SAMPLE_ITEM_LIST)
             @NotEmpty
             @RequestParam List<String> itemIds,
 
+            @Schema(example = SAMPLE_WKT)
             @NotBlank
             @RequestParam String aresOfInterest
     ) throws ValidationException, NotFoundException, ServiceException {

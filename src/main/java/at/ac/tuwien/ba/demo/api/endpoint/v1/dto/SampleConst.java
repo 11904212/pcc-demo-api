@@ -1,0 +1,25 @@
+package at.ac.tuwien.ba.demo.api.endpoint.v1.dto;
+
+public final class SampleConst {
+
+    public static final String SAMPLE_WKT = "POLYGON ((15.3478831 48.2094401, 15.3466774 48.2135189, 15.3433063 48.2126641, 15.3443565 48.2091379, 15.3478831 48.2094401))";
+
+    public static final String SAMPLE_GEOJSON = "{ \"type\": \"Polygon\", \"coordinates\": [[[ 15.3478831, 48.2094401 ], [ 15.3466774, 48.2135189 ], [ 15.3433063, 48.2126641 ], [ 15.3443565, 48.2091379 ], [ 15.3478831, 48.2094401 ]]]}";
+    public static final String SAMPLE_DATETIME_FROM = "2022-08-01T00:00:00.000Z";
+    public static final String SAMPLE_DATETIME_TO = "2022-08-31T23:59:59.999Z";
+    public static final String SAMPLE_COLLECTION = "sentinel-2-l2a";
+
+    public static final String SAMPLE_COLLECTION_JSON = "[\"sentinel-2-l2a\"]";
+
+    public static final String SAMPLE_ITEM_ID = "S2A_MSIL2A_20220902T095601_R122_T33UWP_20220902T204011";
+
+    public static final String SAMPLE_IMAGE_TYPE = "TCI";
+
+    public static final String SAMPLE_ITEM_LIST = "S2B_MSIL2A_20220907T095549_R122_T33UWP_20220908T034954, S2B_MSIL2A_20220818T095549_R122_T33UWP_20220819T020149, S2A_MSIL2A_20220803T100041_R122_T33UWP_20220804T001343";
+
+    public static final String SAMPLE_ITEM_JSON_LIST = "[\"S2B_MSIL2A_20220907T095549_R122_T33UWP_20220908T034954\",\"S2B_MSIL2A_20220818T095549_R122_T33UWP_20220819T020149\",\"S2A_MSIL2A_20220803T100041_R122_T33UWP_20220804T001343\"]";
+
+    private SampleConst(){}
+
+
+}

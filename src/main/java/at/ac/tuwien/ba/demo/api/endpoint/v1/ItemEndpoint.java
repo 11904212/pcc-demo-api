@@ -9,6 +9,7 @@ import at.ac.tuwien.ba.demo.api.exception.NotFoundException;
 import at.ac.tuwien.ba.demo.api.exception.ServiceException;
 import at.ac.tuwien.ba.demo.api.exception.ValidationException;
 import at.ac.tuwien.ba.demo.api.service.ItemService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import mil.nga.sf.geojson.FeatureConverter;
 import mil.nga.sf.geojson.GeoJsonObject;
 import mil.nga.sf.geojson.GeometryCollection;
@@ -38,6 +39,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static at.ac.tuwien.ba.demo.api.endpoint.v1.dto.SampleConst.*;
 
 @RestController
 @RequestMapping(value = ItemEndpoint.BASE_URL)
@@ -85,17 +88,21 @@ public class ItemEndpoint {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ItemInfoDto> getItems(
+            @Schema(example = SAMPLE_COLLECTION)
             @NotEmpty
             @RequestParam List<String> collections,
 
+            @Schema(example = SAMPLE_DATETIME_FROM)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             @PastOrPresent
             @RequestParam ZonedDateTime dateTimeFrom,
 
+            @Schema(example = SAMPLE_DATETIME_TO)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             @PastOrPresent
             @RequestParam(required = false) ZonedDateTime dateTimeTo,
 
+            @Schema(example = SAMPLE_WKT)
             @NotBlank
             @RequestParam String aresOfInterest,
 
