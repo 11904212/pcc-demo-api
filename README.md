@@ -3,9 +3,6 @@ Planetary Computer Client Demo API
 
 A spring boot based demonstration API for processing data from [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/).
 
-Swagger api documentation can be found [here](https://pcc-demo-api.duckdns.org/swagger-ui/index.html).
-
-The related frontend can be tested [here](https://pcc-demo-ui.duckdns.org).
 
 ### Remote Dependencies ###
 
